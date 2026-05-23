@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --nextui-primary: 230 100% 50%;
+  --nextui-secondary: 169 80% 44%;
+  --nextui-success: 125 75% 43%;
+  --nextui-hover-opacity: 1;
+  --nextui-box-shadow-medium: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  background-color: white;
+}
+
+@media (max-width: 768px) {
+  .fancybox-slide--iframe .fancybox-content {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      margin: 0px !important;
+  }
+
+  .fancybox-slide--iframe .fancybox-close-small {
+      top: 38px !important;
+      right: 24px !important;
+      background: #fcfcfc !important;
+      border: solid 2px #b3b3b3 !important;
+      border-radius: 100px !important;
+      width: 44px !important;
+      height: 44px !important;
+  }
+
+  .fancybox-slide--iframe .fancybox-close-small:active {
+      border: solid 2px #666666 !important;
+  }
+
+  .fancybox-slide--iframe .fancybox-close-small:after {
+      line-height: 25px !important;
+  }
+
+  .fancybox-slide--iframe .fancybox-close-small:active:after {
+      color: #666666 !important;
+  }
+}
+
+button[data-slot="base"],
+a[data-slot="base"],
+[role="button"][data-slot="base"] {
+  transition: transform 90ms ease, filter 120ms ease, opacity 120ms ease !important;
+}
+
+button:not([data-slot="base"]),
+a[role="button"]:not([data-slot="base"]),
+[role="button"]:not([data-slot="base"]) {
+  transition: transform 90ms ease, filter 120ms ease, opacity 120ms ease;
+}
+
+@media (hover: hover) {
+  button[data-slot="base"]:hover,
+  a[data-slot="base"]:hover,
+  [role="button"][data-slot="base"]:hover {
+    transform: none !important;
+    filter: none !important;
+    box-shadow: inherit !important;
+  }
+}
+
+button[data-slot="base"][data-hover="true"]:not([data-active="true"]),
+a[data-slot="base"][data-hover="true"]:not([data-active="true"]),
+[role="button"][data-slot="base"][data-hover="true"]:not([data-active="true"]) {
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+button[data-slot="base"]:active,
+a[data-slot="base"]:active,
+[role="button"][data-slot="base"]:active {
+  transform: scale(0.98) !important;
+  filter: brightness(0.96) !important;
+}
+
+button:not([data-slot="base"]):active,
+a[role="button"]:not([data-slot="base"]):active,
+[role="button"]:not([data-slot="base"]):active {
+  transform: scale(0.98);
+  filter: brightness(0.96);
+}
+
+button[data-slot="base"]:disabled,
+button[data-slot="base"][aria-disabled="true"],
+button[data-slot="base"][data-loading="true"],
+a[data-slot="base"][aria-disabled="true"],
+[role="button"][data-slot="base"][aria-disabled="true"] {
+  pointer-events: none !important;
+  opacity: 0.72 !important;
+}
+
+button:not([data-slot="base"]):disabled,
+a[role="button"]:not([data-slot="base"])[aria-disabled="true"],
+[role="button"]:not([data-slot="base"])[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
