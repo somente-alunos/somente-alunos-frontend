@@ -1,6 +1,6 @@
 {
   "name": "somente-alunos-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -14,11 +14,7 @@
 
     "tunnel": "%CD%/tunnel_local/cloudflared.exe tunnel --origincert=%USERPROFILE%\\.cloudflared\\credencial_somentealunos.vip\\cert.pem --url http://localhost:3000 run local2_somentealunos_v1",
 		"log-production": "npx wrangler tail somente-alunos-backend-production",
-		"log-dev": "npx wrangler tail somente-alunos-backend-dev",
-
-    "ignore_wrangler": "git update-index --skip-worktree wrangler.jsonc",
-    "consider_wrangler": "git update-index --no-skip-worktree wrangler.jsonc",
-    "setup-hook": "node -e \"require('fs').writeFileSync('.git/hooks/pre-push', 'npx wrangler deploy --env=production')\""
+		"log-dev": "npx wrangler tail somente-alunos-backend-dev"
   },
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.11.3",
