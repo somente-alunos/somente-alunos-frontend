@@ -28,7 +28,7 @@ import { Type_backendStudentLoginResponse } from "@/env"
 
 const Const_studentSessionStorageKey = 'somente_alunos_student_session_v1'
 const Const_inviteCodeSuggestionStorageKey = 'somente_alunos_invite_code_suggestion_v1'
-const Const_openSourceRepositoryUrl = "http://github.com/somente-alunos/somente-alunos"
+const Const_openSourceRepositoryUrl = "https://github.com/somente-alunos?tab=repositories"
 
 
 export default function LoginPage() {
@@ -419,7 +419,7 @@ export default function LoginPage() {
                 </div>
 
                 <div id="secondHalf" className="w-full md:w-1/2 md:min-h-[auto] min-h-[100vh] bg-white flex justify-center pb-3 md:pb-6 md:pt-2 pl-0 pr-0 min-w-screen z-[20] items-start">
-                    <form onSubmit={handleSubmitLogin} autoComplete="on" method="POST" target="_top" className="w-full md:w-auto px-6 mb-0 md:mb-auto mt-[60px] md:mt-auto mx-auto flex flex-col items-center">
+                    <form onSubmit={handleSubmitLogin} autoComplete="on" method="POST" target="_top" className="w-full md:w-auto px-6 mb-0 md:mb-auto mt-[33px] md:mt-auto mx-auto flex flex-col items-center">
                         <div className="w-full tracking-tighter text-4xl font-semibold max-w-[370px] mb-8 leading-[3.3rem] flex flex-row flex-wrap items-end">
                             <span>Use seu convite&nbsp;</span>
                             <span className="mr-3">para ter acesso</span> 
@@ -530,7 +530,7 @@ export default function LoginPage() {
                         </Button>
                         <Link
                             href="/suporte"
-                            className="group max-w-[370px] w-full mt-2 mb-8 rounded-2xl border border-black/10 bg-[linear-gradient(145deg,hsla(230,100%,97%,1)_0%,hsla(235,100%,98%,1)_58%,hsla(0,0%,100%,1)_100%)] px-4 py-3 transition-all active:border-[hsl(230,100%,50%)] active:shadow-[0_10px_35px_-20px_hsl(230,100%,50%)]"
+                            className="group max-w-[370px] w-full mt-2 rounded-2xl border border-black/10 bg-[linear-gradient(145deg,hsla(230,100%,97%,1)_0%,hsla(235,100%,98%,1)_58%,hsla(0,0%,100%,1)_100%)] px-4 py-3 transition-all active:border-[hsl(230,100%,50%)] active:shadow-[0_10px_35px_-20px_hsl(230,100%,50%)]"
                         >
                             <div className="flex items-start gap-3">
                                 <div className="mt-0.5 rounded-full bg-[hsl(230,100%,94%)] p-2 text-[hsl(230,100%,50%)] transition-colors group-active:bg-[hsl(230,100%,90%)]">
