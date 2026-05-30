@@ -288,9 +288,7 @@ type Type_saleHistoryPatchFormState = {
 	information_content_sale_history: string;
 }
 
-type Type_webhookFormState = {
-	webhookUrlBase: string;
-}
+type Type_webhookFormState = Record<string, never>
 
 function Function_getTrimmedStringOrUndefined(Parameter_value: string): string | undefined {
 	const Const_trimmed = Parameter_value.trim()
@@ -660,9 +658,7 @@ export default function Page_Admin(): JSX.Element {
 		information_content_sale_history: ''
 	})
 
-	const [isWebhookForm, setWebhookForm] = useState<Type_webhookFormState>({
-		webhookUrlBase: ''
-	})
+	const [isWebhookForm, setWebhookForm] = useState<Type_webhookFormState>({})
 
 	const Const_studentArray = isMetricResponse?.studentArray || []
 	const Const_collegeArrayMerged = useMemo<Type_metricCollege[]>(() => {
@@ -1409,14 +1405,17 @@ export default function Page_Admin(): JSX.Element {
 	}
 
 	const Function_configWebhook = async (): Promise<void> => {
-		const Const_body = Function_getObjectWithoutUndefined({
-			webhookUrlBase: Function_getTrimmedStringOrUndefined(isWebhookForm.webhookUrlBase)
-		})
-
 		await Function_runRequest({
 			method: 'POST',
 			path: '/post/admin/config-webhook-efi-bank',
-			jsonBody: Const_body
+			jsonBody: {}
+		})
+	}
+
+	const Function_getWebhooks = async (): Promise<void> => {
+		await Function_runRequest({
+			method: 'GET',
+			path: '/get/admin/config-webhook-efi-bank'
 		})
 	}
 
@@ -2070,22 +2069,14 @@ export default function Page_Admin(): JSX.Element {
 
 						<div className="rounded-xl border border-slate-700/80 bg-slate-900/70 px-4 py-3">
 							<p className="text-sm font-semibold tracking-tight">Seção Configuração</p>
-							<p className="mt-1 text-xs text-slate-400">Ordem: GET, POST, PATCH e DELETE. Endpoint disponível: POST.</p>
+							<p className="mt-1 text-xs text-slate-400">Endpoints disponíveis: GET e POST.</p>
 						</div>
-						<Component_FormSection title="POST /post/admin/config-webhook-efi-bank">
-							<div className="grid gap-3">
-								<Component_Field
-									label="webhookUrlBase (obrigatório)"
-									value={isWebhookForm.webhookUrlBase}
-									onChange={(Parameter_value) => setWebhookForm((Parameter_previous) => ({ ...Parameter_previous, webhookUrlBase: Parameter_value }))}
-									placeholder="https://seu-dominio.com/post/efi-bank/webhook"
-									required
-								/>
-							</div>
-							<button onClick={Function_configWebhook} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">Executar config webhook</button>
-						</Component_FormSection>
+						<p className="text-xs text-slate-400">Gerencia webhooks usando <code className="text-slate-300">Env_webhookUrlBase</code> configurado no backend.</p>
+						<div className="flex flex-wrap gap-2">
+							<button onClick={Function_configWebhook} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">POST - Ativar Webhook</button>
+							<button onClick={Function_getWebhooks} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900">GET - Listar Webhooks</button>
+						</div>
 					</div>
-
 					<div className="hidden">
 						<section className="rounded-xl border border-slate-700/80 bg-slate-900/70 p-4 md:p-5">
 							<div className="flex items-center justify-between gap-2">

@@ -227,4 +227,17 @@ export type Type_backendStudentPixPaymentResponse = {
 export type Type_backendAdminConfigWebhookEfiResponse = {
     success: true;
     pixCopiaECola: string;
+    webhooks: Array<{
+        webhookUrl: string;
+        chave: string;
+        criacao: string;
+    }>;
+};
+
+export type Type_backendAdminGetConfigWebhookEfiResponse = {
+    webhooks: Array<{
+        webhookUrl: string;
+        chave: string;
+        criacao: string;
+    }>;
 };
