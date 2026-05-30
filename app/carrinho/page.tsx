@@ -480,11 +480,12 @@ export default function Page_Carrinho(): JSX.Element {
 				throw new Error("Carrinho vazio")
 			}
 
-			const Const_response = await fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/post/student/gerar-pagamento-pix`, {
+			const Const_response = await fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/post/student/gerar-cobranca`, {
 				method: "POST",
 				headers: { "content-type": "application/json; charset=utf-8" },
 				credentials: "include",
 				body: JSON.stringify({
+					method: "pix",
 					contentUuidArray: Const_contentUuidArray
 				})
 			})
