@@ -565,7 +565,7 @@ export default function Page_Carrinho(): JSX.Element {
 			</header>
 
 			<main className="mx-auto mt-[74px] w-full max-w-[980px] px-[10px] pb-[260px] pt-4">
-				<div className="mb-4 flex flex-col gap-2 items-center md:items-start">
+				<div className="mb-4 flex flex-col gap-2 items-center md:items-end">
 					<Button
 						color="default"
 						variant="bordered"
@@ -623,10 +623,10 @@ export default function Page_Carrinho(): JSX.Element {
 							return (
 								<div
 									key={Let_contentSingle.content_uuid}
-									className={`relative rounded-2xl border px-4 py-4 pr-12 transition-colors ${
+									className={`relative rounded-md border border-default-400 pt-2.5 pb-4 px-2.5 transition-colors bg-default-100/50 ${
 										Const_canOpenPreview
-											? `cursor-pointer ${isPressedCartCardUuid === Let_contentSingle.content_uuid ? "bg-default-200 border-default-500" : "bg-background border-default-300"}`
-											: "bg-background border-default-200"
+											? `cursor-pointer ${isPressedCartCardUuid === Let_contentSingle.content_uuid ? "bg-default-300 border-default-500" : "bg-default-100/50"}`
+											: "bg-default-100/50"
 									}`}
 									role={Const_canOpenPreview ? "button" : undefined}
 									tabIndex={Const_canOpenPreview ? 0 : -1}
@@ -681,19 +681,19 @@ export default function Page_Carrinho(): JSX.Element {
 									<p className="text-base font-semibold leading-5 text-default-900 break-words">
 										{Let_contentSingle.name_content}
 									</p>
-									<div className="mt-2">
+									{/* <div className="mt-2">
 										<span className={`inline-flex min-h-8 items-center rounded-full px-3 text-sm font-medium ${
 											Let_contentSingle.verified_content === 1
 												? "bg-success-100 text-success-700"
 												: "bg-danger-100 text-danger-700"
 										}`}>
 											{Let_contentSingle.verified_content === 1
-												? "Verificado por um administrador"
-												: "Nao verificado por um administrador"}
+												? "Verificado"
+												: "Nao verificado"}
 										</span>
-									</div>
+									</div> */}
 
-									<div className="mt-3 flex flex-wrap items-end gap-2">
+									<div className="mt-1.5 flex flex-wrap gap-2 items-baseline">
 										{Const_hasDiscountTag ? (
 											<span className="text-sm font-medium text-new-tertiary line-through">
 												{Function_formatCurrencyBRL(Let_contentSingle.old_price_content as number)}
@@ -717,9 +717,9 @@ export default function Page_Carrinho(): JSX.Element {
 							<div className="text-xs font-semibold tracking-wide text-default-500">
 								Valor total
 							</div>
-							<div className="mt-1 flex flex-wrap items-end gap-x-3 gap-y-1">
+							<div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 items-baseline">
 								{isCartHasDiscount ? (
-									<div className="text-base font-semibold leading-none text-new-tertiary line-through">
+									<div className="text-base font-medium text-new-tertiary line-through">
 										{Function_formatCurrencyBRL(isCartOldTotalAmount)}
 									</div>
 								) : null}

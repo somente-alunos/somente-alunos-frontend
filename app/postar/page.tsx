@@ -218,7 +218,7 @@ export default function Page_Postar(): JSX.Element {
 				<Component_HeaderIdChatbotContentServer value={{ isInfUser: { user_uuid: isSession.student.student_uuid } }} />
 			</header>
 
-			<main className="flex justify-center pt-[15px] px-[10px] mt-[74px]">
+			<main className="flex justify-center pt-[15px] px-[8px] mt-[74px]">
 				<Card className="flex w-[1200px] px-3 pt-2 md:pt-0 pb-3 p-0 border-small border-default-200 shadow-none border-none">
 					<CardBody className="pt-0 overflow-hidden !px-[0px] md:!px-[40px]">
 						<div className="w-full max-w-[980px] mx-auto pb-10 pt-3">
@@ -444,8 +444,8 @@ export default function Page_Postar(): JSX.Element {
 															: "bg-danger-100 text-danger-700"
 													}`}>
 														{Let_contentSingle.verified_content === 1
-															? "Verificado por um administrador"
-															: "Nao verificado por um administrador"}
+															? "Verificado"
+															: "Nao verificado"}
 													</span>
 												</div>
 												{Const_hasPreviewOnly ? (

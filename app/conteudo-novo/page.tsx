@@ -440,11 +440,11 @@ export default function Page_ConteudoNovo(): JSX.Element {
 				<Component_HeaderIdChatbotContentServer value={{ isInfUser: { user_uuid: isSession.student.student_uuid } }} />
 			</header>
 
-			<main className="flex justify-center pt-[15px] px-[10px] mt-[74px]">
+			<main className="flex justify-center pt-[15px] px-[8px] mt-[74px]">
 				<Card className="flex w-[1200px] px-3 pt-2 md:pt-0 pb-3 p-0 border-small border-default-200 shadow-none border-none">
 					<CardBody className="pt-0 overflow-hidden !px-[0px] md:!px-[40px]">
 						<div className="w-full max-w-[980px] mx-auto pb-10 pt-3">
-							<div className="mb-5 flex items-center justify-center md:justify-start">
+							<div className="mb-5 flex items-center justify-center md:justify-end">
 								<Button
 									color="default"
 									variant="bordered"
@@ -635,9 +635,9 @@ export default function Page_ConteudoNovo(): JSX.Element {
 											</span>
 										</label>
 
-										<div className="md:col-span-2 flex items-center justify-between pt-2">
+										<div className="md:col-span-2 flex items-center justify-between pt-2 gap-3">
 											<div className="text-xs text-default-500 inline-flex items-center gap-1">
-												<FileText size={14} />
+												{/* <FileText size={14} /> */}
 												Aceita somente PDF ou HTML, maximo 5MB por arquivo.
 											</div>
 											<Button

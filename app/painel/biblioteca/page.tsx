@@ -232,28 +232,22 @@ export default function Page_Library(): JSX.Element {
 	}, [isSession])
 
 	const isDisplayCollegeArray = useMemo(() => {
-		if (!isSession || !isShouldPutSuggestionSecond || !isSession.student.college_uuid_student) {
+		if (!isSession || !isSession.student.college_uuid_student) {
 			return isCollegeArray
 		}
 
 		return Function_moveSuggestionToPosition(
 			isCollegeArray,
 			(Parameter_single) => Parameter_single.college_uuid === isSession.student.college_uuid_student,
-			1
+			0
 		)
-	}, [isCollegeArray, isSession, isShouldPutSuggestionSecond])
+	}, [isCollegeArray, isSession])
 
 	const isDisplayCourseArray = useMemo(() => {
 		if (
 			!isSession ||
-			!isShouldPutSuggestionSecond ||
-			!isSession.student.college_uuid_student ||
 			!isSession.student.course_uuid_student
 		) {
-			return isCourseArray
-		}
-
-		if (isSelectedCollegeUuid !== isSession.student.college_uuid_student) {
 			return isCourseArray
 		}
 
@@ -262,7 +256,7 @@ export default function Page_Library(): JSX.Element {
 			(Parameter_single) => Parameter_single.course_uuid === isSession.student.course_uuid_student,
 			0
 		)
-	}, [isCourseArray, isSelectedCollegeUuid, isSession, isShouldPutSuggestionSecond])
+	}, [isCourseArray, isSession])
 
 	const isLibraryContentDisplayArray = useMemo(() => {
 		return isLibraryContentArray.map((Parameter_single) => ({
@@ -882,10 +876,10 @@ export default function Page_Library(): JSX.Element {
 		return (
 			<div
 				key={Let_contentSingle.content_uuid}
-				className={`rounded-xl border border-default-400 p-4 transition-colors ${
+				className={`rounded-md border border-default-400 pt-2.5 pb-4 px-2.5 transition-colors bg-default-100/50 ${
 					Const_canOpenViewer
-						? `cursor-pointer ${isPressedLibraryCardUuid === Let_contentSingle.content_uuid ? "bg-default-300 border-default-500" : "bg-default-50/60"}`
-						: "bg-default-50/40"
+						? `cursor-pointer ${isPressedLibraryCardUuid === Let_contentSingle.content_uuid ? "bg-default-300 border-default-500" : "bg-default-100/50"}`
+						: "bg-default-100/50"
 				}`}
 				role={Const_canOpenViewer ? "button" : undefined}
 				tabIndex={Const_canOpenViewer ? 0 : -1}
@@ -917,22 +911,22 @@ export default function Page_Library(): JSX.Element {
 				}}
 			>
 				<div className="flex items-start gap-2">
-					<FileText size={20} className="mt-[1px] text-default-600" />
+					{/* <FileText size={20} className="mt-[1px] text-default-600" /> */}
 					<div className="text-base font-semibold text-default-900">{Let_contentSingle.name_content}</div>
 				</div>
-				<div className="mt-1 text-sm text-default-600">
+				<div className="text-sm text-default-600">
 					Compartilhado por {Function_getStudentAlias(Let_contentSingle.owner_student_uuid)}
 				</div>
 
-				<div className="mt-2 flex flex-wrap items-center gap-2">
+				{/* <div className="mt-2 flex flex-wrap items-center gap-2">
 					<span className={`inline-flex min-h-8 items-center rounded-full px-3 text-sm font-medium ${
 						Let_contentSingle.verified_content === 1
 							? "bg-success-100 text-success-700"
 							: "bg-danger-100 text-danger-700"
 					}`}>
 						{Let_contentSingle.verified_content === 1
-							? "Verificado por um administrador"
-							: "Nao verificado por um administrador"}
+							? "Verificado"
+							: "Nao verificado"}
 					</span>
 
 					{Const_isNonAcquiredAvailable && Let_contentSingle.old_price_content > 0 &&
@@ -953,15 +947,30 @@ export default function Page_Library(): JSX.Element {
 							{Const_availabilityLabel}
 						</span>
 					) : null}
-				</div>
+				</div> */}
 
-				<div className="mt-3 flex flex-wrap gap-2">
+				{Const_isNonAcquiredAvailable ? (
+					<div className="mt-3.5 flex flex-wrap gap-2 items-baseline">
+						{typeof Let_contentSingle.old_price_content === "number" &&
+						Let_contentSingle.old_price_content > 0 &&
+						Let_contentSingle.old_price_content !== Let_contentSingle.current_price_content ? (
+							<span className="text-sm font-medium text-new-tertiary line-through">
+								{Function_formatCurrencyBRL(Let_contentSingle.old_price_content as number)}
+							</span>
+						) : null}
+						<span className="text-xl font-bold leading-none text-new-secondary">
+							{Function_formatCurrencyBRL(Let_contentSingle.current_price_content)}
+						</span>
+					</div>
+				) : null}
+
+				<div className="mt-6 flex flex-wrap gap-2">
 					{Const_canOpenPreview ? (
 						<>
 							<Button
 								size="md"
 								variant="solid"
-								className="min-h-11 px-4 text-base font-semibold bg-new-primary text-white active:bg-new-primary-700"
+								className="px-4 text-sm font-semibold bg-new-primary text-white active:bg-new-primary-700"
 								startContent={<Eye size={18} />}
 								isDisabled={Const_isLoadingThisContent}
 								onClick={(Parameter_event) => {
@@ -969,12 +978,12 @@ export default function Page_Library(): JSX.Element {
 									Function_handleOpenViewer()
 								}}
 							>
-								Ver previa
+								Ver Prévia
 							</Button>
 							<Button
 								size="md"
 								variant="solid"
-								className="min-h-11 px-4 text-base font-semibold bg-new-tertiary text-white active:bg-new-tertiary-700"
+								className="px-4 text-sm font-semibold bg-new-tertiary text-white active:bg-new-tertiary-700"
 								startContent={<ShoppingCart size={18} />}
 								isLoading={isCartActionLoadingUuid === Let_contentSingle.content_uuid}
 								isDisabled={!!isCartActionLoadingUuid || !!isNavigationLoadingTarget}
@@ -989,7 +998,7 @@ export default function Page_Library(): JSX.Element {
 									})
 								}}
 							>
-								Adicionar no carrinho
+								Adicionar
 							</Button>
 						</>
 					) : Const_canOpenFull ? (
@@ -1026,7 +1035,7 @@ export default function Page_Library(): JSX.Element {
 	return (
 		<>
 			<div className="w-full max-w-[980px] mx-auto pb-10 pt-3">
-				<div className="mb-5 flex flex-col gap-2 md:flex-row md:justify-end">
+				<div className="mb-[18px] flex flex-row gap-2 md:flex-row md:justify-end">
 					<Button
 						color={"new-primary" as unknown as "default"}
 						variant="bordered"
@@ -1036,7 +1045,7 @@ export default function Page_Library(): JSX.Element {
 						isDisabled={!!isNavigationLoadingTarget}
 						onClick={() => Function_navigateWithFeedback("/postar", "postar")}
 					>
-						Postar Conteudo
+						Postar
 					</Button>
 					<Button
 						color={"new-secondary" as unknown as "default"}
@@ -1046,7 +1055,7 @@ export default function Page_Library(): JSX.Element {
 						isDisabled={!!isNavigationLoadingTarget}
 						onClick={() => Function_openSelectionModal("manual")}
 					>
-						Alterar Faculdade/Curso
+						Curso
 					</Button>
 					<Button
 						color={"new-tertiary" as unknown as "default"}
@@ -1057,18 +1066,18 @@ export default function Page_Library(): JSX.Element {
 						isDisabled={!!isNavigationLoadingTarget}
 						onClick={() => Function_navigateWithFeedback("/carrinho", "carrinho")}
 					>
-						Ver meu Carrinho
+						Carrinho
 					</Button>
 				</div>
 
-				<div className="mb-5">
+				<div className="mb-5 flex gap-x-3 gap-y-0 flex-wrap">
 					<div className="flex items-center gap-2">
 						<LibraryBig size={20} className="text-default-600" />
 						<h1 className="text-2xl font-semibold">Biblioteca</h1>
 					</div>
-					<div className="mt-1 text-sm text-default-600 space-y-0.5">
+					<div className="text-sm text-default-600 space-y-0.5 mb-0.5 flex items-end">
 						<div className="font-medium">
-							{isLibrarySummaryCollegeName} - {isLibrarySummaryCourseName}
+							{/* {isLibrarySummaryCollegeName} -  */}{isLibrarySummaryCourseName}
 						</div>
 						{/* <div>
 							{isLibraryContentDisplayArray.length} conteudos encontrados
@@ -1083,19 +1092,29 @@ export default function Page_Library(): JSX.Element {
 				) : null}
 
 				<div className="space-y-7">
-					<section>
-						<div className="mb-3">
-							<h2 className="inline-flex items-center gap-2 rounded-full bg-warning-200 px-3 py-1 text-base font-semibold text-warning-700">
-								<span>Em destaque</span>
-								<Trophy size={18} className="text-warning-500" />
-							</h2>
+					<div className="px-1">
+						<div className="relative flex items-center justify-center">
+							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
+							<span className="mx-3 rounded-full border border-default-300 bg-default-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-default-600">
+								Conteudos em destaque
+							</span>
+							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 						</div>
+					</div>
+
+					<section>
+						{/* <div className="mb-3">
+							<h2 className="inline-flex items-center gap-2 rounded-full bg-warning-100 px-3 py-1 text-base font-semibold text-warning-700">
+								<span>Em destaque</span>
+								<Trophy size={18} className="text-warning-700" />
+							</h2>
+						</div> */}
 						{isLibraryGroupedContent.featured.length <= 0 ? (
 							<div className="rounded-xl border border-default-200 bg-default-50 p-4 text-sm text-default-600">
-								{"Sem conte\u00FAdo em destaque."}
+								{"Sem conte\u00FAdo em destaque"}
 							</div>
 						) : (
-							<div className="grid grid-cols-1 gap-4">
+							<div className="grid grid-cols-1 gap-5">
 								{isLibraryGroupedContent.featured.map(Function_renderLibraryContentCard)}
 							</div>
 						)}
@@ -1114,11 +1133,11 @@ export default function Page_Library(): JSX.Element {
 					<section>
 						{isLibraryGroupedContent.old.length <= 0 ? (
 							<div className="rounded-xl border border-default-200 bg-default-50 p-4 text-sm text-default-600">
-								{"Sem conte\u00FAdo antigo."}
+								{"Sem conte\u00FAdo antigo"}
 							</div>
 						) : (
 							<>
-								<div className="grid grid-cols-1 gap-4">
+								<div className="grid grid-cols-1 gap-5">
 									{isLibraryOldVisibleContentArray.map(Function_renderLibraryContentCard)}
 								</div>
 								{isHasMoreOldContent ? (

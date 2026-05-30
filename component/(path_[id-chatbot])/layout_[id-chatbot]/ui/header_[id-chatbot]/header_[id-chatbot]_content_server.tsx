@@ -82,7 +82,7 @@ export function Component_HeaderIdChatbotContentServer({value: { isInfUser } }: 
                 </NavbarContent>
 
                 <NavbarContent justify='end' className='gap-4 md:gap-6'>
-                    <div className='flex flex-col items-end mr-0 md:mr-2'>
+                    {/* <div className='flex flex-col items-end mr-0 md:mr-2'>
                         {isInfUser.user_uuid?.split('-')[0] && (
                             <>
                                 <span className='-mb-1 whitespace-nowrap text-sm'>
@@ -94,7 +94,7 @@ export function Component_HeaderIdChatbotContentServer({value: { isInfUser } }: 
                             </>
                         )
                         }
-                    </div>
+                    </div> */}
                     <Button onClick={Function_navigateSupportWithFeedback} variant='bordered' color='primary' className='font-semibold active:bg-primary-500 active:text-white' isLoading={isHeaderActionLoadingTarget === "support"} isDisabled={!!isHeaderActionLoadingTarget}>
                         Suporte
                     </Button>

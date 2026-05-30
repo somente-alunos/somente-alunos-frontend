@@ -154,11 +154,11 @@ export default function Page_Carteira(): JSX.Element {
 				<Component_HeaderIdChatbotContentServer value={{ isInfUser: { user_uuid: isSession.student.student_uuid } }} />
 			</header>
 
-			<main className="flex justify-center pt-[15px] px-[10px] mt-[74px]">
+			<main className="flex justify-center pt-[15px] px-[8px] mt-[74px]">
 				<Card className="flex w-[1200px] px-3 pt-2 md:pt-0 pb-3 p-0 border-small border-default-200 shadow-none border-none">
 					<CardBody className="pt-0 overflow-hidden !px-[0px] md:!px-[40px]">
 						<div className="w-full max-w-[980px] mx-auto pb-10 pt-3">
-							<div className="mb-5 flex flex-col gap-2 items-end md:flex-row md:justify-end">
+							<div className="mb-5 flex flex-col gap-2 items-center md:flex-row md:justify-end">
 								<Button
 									color="default"
 									variant="bordered"

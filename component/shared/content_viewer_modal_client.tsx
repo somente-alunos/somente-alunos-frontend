@@ -179,7 +179,7 @@ export function Component_ContentViewerModalClient(
 				}}
 			>
 				<ModalContent className="!m-0 w-[900px] max-w-full rounded-none md:rounded-[12px] max-h-[100svh] md:max-h-[calc(100svh-20px)] overflow-y-auto md:!mx-[15px]">
-					<ModalHeader className="flex flex-col gap-3 px-4 md:px-5 pb-3 pt-4">
+					<ModalHeader className="flex flex-col gap-3 px-2 md:px-5 pb-3 pt-4">
 						<h1 className="font-light tracking-[0.5px] text-[22px] leading-tight flex flex-wrap">
 							Compartilhada por&nbsp;
 							<span className="font-normal break-all">{Parameter_props.ownerAlias}</span>
@@ -190,7 +190,7 @@ export function Component_ContentViewerModalClient(
 							<div className="text-sm text-warning-800 leading-relaxed">{Const_warningContent}</div>
 						</div>
 
-						<div className="flex items-start justify-between gap-2 flex-wrap">
+						<div className="flex justify-between gap-2 flex-wrap items-end">
 							<button
 								type="button"
 								onClick={Function_handleOpenReportModal}
@@ -213,7 +213,7 @@ export function Component_ContentViewerModalClient(
 						</div>
 					</ModalHeader>
 
-					<ModalBody className="px-4 md:px-5 pb-4 md:pb-5 pt-0">
+					<ModalBody className="px-2 md:px-5 pb-4 md:pb-5 pt-0">
 						<div
 							className="w-full shadow-medium rounded-[6px] border border-black overflow-hidden flex flex-col items-center min-h-[68svh] md:min-h-[74svh]"
 						>
@@ -237,7 +237,7 @@ export function Component_ContentViewerModalClient(
 									title="Visualizador de conteudo"
 									onLoad={Parameter_props.onIframeLoad}
 									className={Parameter_props.isHtmlFile
-										? "!m-0 !p-0 w-full border-0 bg-transparent pointer-events-none"
+										? "!m-0 !p-0 w-full border-0 bg-transparent"
 										: "!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"}
 									style={Parameter_props.isHtmlFile
 										? { height: `${Math.max(720, Parameter_props.iframeHeightPx)}px` }
