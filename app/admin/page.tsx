@@ -289,9 +289,7 @@ type Type_saleHistoryPatchFormState = {
 }
 
 type Type_webhookFormState = {
-	efiBankAlias: '' | 'gp' | 'rp' | 'rc';
 	webhookUrlBase: string;
-	skipMtlsChecking: boolean;
 }
 
 function Function_getTrimmedStringOrUndefined(Parameter_value: string): string | undefined {
@@ -663,9 +661,7 @@ export default function Page_Admin(): JSX.Element {
 	})
 
 	const [isWebhookForm, setWebhookForm] = useState<Type_webhookFormState>({
-		efiBankAlias: '',
-		webhookUrlBase: '',
-		skipMtlsChecking: true
+		webhookUrlBase: ''
 	})
 
 	const Const_studentArray = isMetricResponse?.studentArray || []
@@ -1414,9 +1410,7 @@ export default function Page_Admin(): JSX.Element {
 
 	const Function_configWebhook = async (): Promise<void> => {
 		const Const_body = Function_getObjectWithoutUndefined({
-			efiBankAlias: isWebhookForm.efiBankAlias || undefined,
-			webhookUrlBase: Function_getTrimmedStringOrUndefined(isWebhookForm.webhookUrlBase),
-			skipMtlsChecking: isWebhookForm.skipMtlsChecking
+			webhookUrlBase: Function_getTrimmedStringOrUndefined(isWebhookForm.webhookUrlBase)
 		})
 
 		await Function_runRequest({
@@ -2079,34 +2073,14 @@ export default function Page_Admin(): JSX.Element {
 							<p className="mt-1 text-xs text-slate-400">Ordem: GET, POST, PATCH e DELETE. Endpoint disponível: POST.</p>
 						</div>
 						<Component_FormSection title="POST /post/admin/config-webhook-efi-bank">
-							<div className="grid gap-3 md:grid-cols-2">
-								<label className="grid gap-1">
-									<span className="text-xs font-medium text-slate-300">efiBankAlias (opcional)</span>
-									<select
-										value={isWebhookForm.efiBankAlias}
-										onChange={(Parameter_event) => setWebhookForm((Parameter_previous) => ({ ...Parameter_previous, efiBankAlias: Parameter_event.target.value as '' | 'gp' | 'rp' | 'rc' }))}
-										className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm outline-none focus:border-sky-400"
-									>
-										<option value="">Não enviar</option>
-										<option value="gp">gp</option>
-										<option value="rp">rp</option>
-										<option value="rc">rc</option>
-									</select>
-								</label>
+							<div className="grid gap-3">
 								<Component_Field
-									label="webhookUrlBase (opcional)"
+									label="webhookUrlBase (obrigatório)"
 									value={isWebhookForm.webhookUrlBase}
 									onChange={(Parameter_value) => setWebhookForm((Parameter_previous) => ({ ...Parameter_previous, webhookUrlBase: Parameter_value }))}
-									placeholder="https://seu-dominio/post/efi-bank/webhook"
+									placeholder="https://seu-dominio.com/post/efi-bank/webhook"
+									required
 								/>
-								<label className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm md:col-span-2">
-									<input
-										type="checkbox"
-										checked={isWebhookForm.skipMtlsChecking}
-										onChange={(Parameter_event) => setWebhookForm((Parameter_previous) => ({ ...Parameter_previous, skipMtlsChecking: Parameter_event.target.checked }))}
-									/>
-									<span>skipMtlsChecking</span>
-								</label>
 							</div>
 							<button onClick={Function_configWebhook} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">Executar config webhook</button>
 						</Component_FormSection>

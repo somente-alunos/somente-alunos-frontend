@@ -220,16 +220,11 @@ export type Type_backendStudentConteudoFileResponse = {
 };
 
 export type Type_backendStudentPixPaymentResponse = {
-    payment: {
-        pixPaymentUuid: string;
-        txid: string;
-        efiBankAlias: 'gp' | 'rp' | 'rc';
-        totalAmountPixPayment: number;
-        statusPixPayment: string;
-        expiresInSeconds: number;
-        chargeStatus: string | null;
-        location: string | null;
-        copyAndPaste: string;
-    };
-    contentArray: Type_backendContent[];
+    pixCopiaECola: string;
+    contentUuidArray: Array<string>;
+};
+
+export type Type_backendAdminConfigWebhookEfiResponse = {
+    success: true;
+    pixCopiaECola: string;
 };

@@ -498,12 +498,12 @@ export default function Page_Carrinho(): JSX.Element {
 			}
 
 			const Const_responseBody = await Const_response.json() as Type_backendStudentPixPaymentResponse
-			const Const_copyAndPaste = Const_responseBody?.payment?.copyAndPaste || ""
-			if (!Const_copyAndPaste) {
+			const Const_pixCopiaECola = Const_responseBody?.pixCopiaECola || ""
+			if (!Const_pixCopiaECola) {
 				throw new Error("Pix nao retornado")
 			}
 
-			setPixCode(Const_copyAndPaste)
+			setPixCode(Const_pixCopiaECola)
 			setPixMessage("Pix gerado com sucesso. Finalize o pagamento para liberar os conteudos.")
 		}
 		catch {
