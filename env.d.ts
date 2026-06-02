@@ -162,6 +162,12 @@ export type Type_backendStudent = {
 	isAllContentUnlocked: boolean;
 };
 
+export type Type_backendCollege = {
+    college_uuid: string;
+    name_college: string;
+    svg_college: string | null;
+};
+
 export type Type_backendCourse = {
     course_uuid: string;
     name_course: string;
