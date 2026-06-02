@@ -855,8 +855,8 @@ export default function Page_Carrinho(): JSX.Element {
 								<>
 									<ModalHeader className="flex flex-col gap-1 pb-0">
 										<div className="flex flex-col items-center gap-0">
-											<span className="text-sm font-semibold text-default-500 uppercase tracking-wider">Beneficiario</span>
-											<span className="text-lg font-bold text-default-900">Somente Alunos</span>
+											<span className="text-sm font-semibold text-default-500 uppercase tracking-wider">Beneficiário</span>
+											<span className="text-lg font-bold text-default-900">49.835.763 Rafael Silva</span>
 										</div>
 									</ModalHeader>
 									<ModalBody className="pt-6 md:py-10 flex flex-col justify-center">
