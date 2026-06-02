@@ -890,7 +890,7 @@ export default function Page_Carrinho(): JSX.Element {
 															}}
 														>
 															<span className="text-xs text-default-500 truncate max-w-[400px] md:max-w-full block text-center mx-auto">
-																{isPixCode || "Codigo Pix indisponivel no momento"}
+																{isPixCode || "Código Pix indisponível no momento"}
 															</span>
 														</Snippet>
 
@@ -902,7 +902,7 @@ export default function Page_Carrinho(): JSX.Element {
 															onPress={Function_copyPix}
 															isDisabled={!isPixCode}
 														>
-															{isPixCopied ? "Codigo Copiado!" : "Copiar Codigo Pix"}
+															{isPixCopied ? "Código Copiado!" : "Copiar Código Pix"}
 														</Button>
 
 														{isPixMessage ? (

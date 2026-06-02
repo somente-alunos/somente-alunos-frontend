@@ -245,7 +245,7 @@ export function Component_ContentViewerModalClient(
 								/>
 							) : (
 								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex items-center justify-center text-default-600 text-base px-4 text-center">
-									Arquivo indisponivel no momento.
+									Arquivo indisponível no momento.
 								</div>
 							)}
 
