@@ -42,7 +42,8 @@ type Type_paymentStatusResponse = {
 	isPaid?: boolean;
 }
 
-const Const_paymentPollIntervalMs = 2000
+const Const_paymentPollIntervalMs = 3000
+const Const_pendingPaymentMaxAgeMs = 5 * 60 * 1000
 
 function Function_getCartStorageKey(Parameter_studentUuid: string): string {
 	if (!Parameter_studentUuid) {
@@ -167,6 +168,7 @@ export default function Page_Carrinho(): JSX.Element {
 	const [isPixCopied, setPixCopied] = useState(false)
 	const [isPixMessage, setPixMessage] = useState("")
 	const [isOrderedUuid, setOrderedUuid] = useState("")
+	const [isPaymentCreatedAt, setPaymentCreatedAt] = useState(0)
 
 	const [isViewerModalOpen, setViewerModalOpen] = useState(false)
 	const [isViewerLoading, setViewerLoading] = useState(false)
@@ -611,6 +613,7 @@ export default function Page_Carrinho(): JSX.Element {
 			setPixMessage("")
 			setPixCode("")
 			setOrderedUuid("")
+			setPaymentCreatedAt(0)
 			Function_clearPaymentTimers()
 
 			const Const_contentUuidArray = isCartArray.map((Parameter_single) => Parameter_single.content_uuid)
@@ -648,12 +651,14 @@ export default function Page_Carrinho(): JSX.Element {
 
 			setPixCode(Const_pixCopiaECola)
 			setOrderedUuid(Const_orderedUuid)
+			const Const_paymentCreatedAt = Date.now()
+			setPaymentCreatedAt(Const_paymentCreatedAt)
 			Function_savePendingPayment({
 				orderedUuid: Const_orderedUuid,
 				contentUuidArray: Array.isArray(Const_responseBody?.contentUuidArray) ? Const_responseBody.contentUuidArray : Const_contentUuidArray,
 				studentUuid: isSession?.student?.student_uuid || "",
 				method: "pix",
-				createdAt: Date.now()
+				createdAt: Const_paymentCreatedAt
 			})
 			setPixMessage("Pix gerado com sucesso. Finalize o pagamento para liberar os conteúdos.")
 		}
@@ -677,6 +682,7 @@ export default function Page_Carrinho(): JSX.Element {
 			isPaymentConfirmedRef.current = false
 			setPixMessage("")
 			setOrderedUuid("")
+			setPaymentCreatedAt(0)
 			Function_clearPaymentTimers()
 
 			const Const_contentUuidArray = isCartArray.map((Parameter_single) => Parameter_single.content_uuid)
@@ -712,12 +718,14 @@ export default function Page_Carrinho(): JSX.Element {
 				throw new Error("Identificador da cobranca nao retornado")
 			}
 
+			const Const_paymentCreatedAt = Date.now()
+			setPaymentCreatedAt(Const_paymentCreatedAt)
 			Function_savePendingPayment({
 				orderedUuid: Const_orderedUuid,
 				contentUuidArray: Array.isArray(Const_responseBody?.contentUuidArray) ? Const_responseBody.contentUuidArray : Const_contentUuidArray,
 				studentUuid: isSession?.student?.student_uuid || "",
 				method: "card_credit",
-				createdAt: Date.now()
+				createdAt: Const_paymentCreatedAt
 			})
 			window.location.href = Const_paymentUrl
 		}
@@ -737,7 +745,7 @@ export default function Page_Carrinho(): JSX.Element {
 
 		navigator.clipboard.writeText(isPixCode)
 		setPixCopied(true)
-		setTimeout(() => setPixCopied(false), 2000)
+		setTimeout(() => setPixCopied(false), 3000)
 	}, [isPixCode])
 
 	const Function_handlePixPayment = useCallback(async (): Promise<void> => {
@@ -756,6 +764,7 @@ export default function Page_Carrinho(): JSX.Element {
 		setPaymentStep("method_selection")
 		setPaymentStatus("idle")
 		setOrderedUuid("")
+		setPaymentCreatedAt(0)
 		Const_router.push("/painel/biblioteca")
 	}, [Const_router, Function_clearPaymentTimers])
 
@@ -768,6 +777,7 @@ export default function Page_Carrinho(): JSX.Element {
 		setPaymentStep("method_selection")
 		setPaymentStatus("idle")
 		setOrderedUuid("")
+		setPaymentCreatedAt(0)
 		setShowCardMaintenance(false)
 		setPixModalOpen(true)
 	}, [Function_clearPaymentTimers])
@@ -785,6 +795,7 @@ export default function Page_Carrinho(): JSX.Element {
 			setPaymentStep("method_selection")
 			setPaymentStatus("idle")
 			setOrderedUuid("")
+			setPaymentCreatedAt(0)
 			setShowCardMaintenance(false)
 			setPixMessage("")
 			setPixCode("")
@@ -822,7 +833,7 @@ export default function Page_Carrinho(): JSX.Element {
 	}, [Function_clearCartOnStorageAndState, Function_clearPaymentTimers, isOrderedUuid])
 
 	useEffect(() => {
-		if (!isPixModalOpen || isPaymentStep !== "pix_payment" || !isOrderedUuid || isPaymentStatus === "paid") {
+		if (!isPixModalOpen || isPaymentStep !== "pix_payment" || !isOrderedUuid || !isPaymentCreatedAt || isPaymentStatus === "paid") {
 			return
 		}
 
@@ -830,6 +841,14 @@ export default function Page_Carrinho(): JSX.Element {
 
 		const Function_checkPaymentStatus = async (): Promise<void> => {
 			if (isCancelled || isPaymentConfirmedRef.current) {
+				return
+			}
+			if (Date.now() - isPaymentCreatedAt > Const_pendingPaymentMaxAgeMs) {
+				Function_clearPaymentTimers()
+				setPaymentStatus("idle")
+				setOrderedUuid("")
+				setPaymentCreatedAt(0)
+				setPixMessage("Essa cobranca expirou. Gere uma nova cobranca para continuar.")
 				return
 			}
 
@@ -856,7 +875,7 @@ export default function Page_Carrinho(): JSX.Element {
 				isPaymentPollIntervalRef.current = null
 			}
 		}
-	}, [Function_fetchPaymentStatus, Function_finalizeSuccessfulPayment, isOrderedUuid, isPaymentStatus, isPixModalOpen, isPaymentStep])
+	}, [Function_clearPaymentTimers, Function_fetchPaymentStatus, Function_finalizeSuccessfulPayment, isOrderedUuid, isPaymentCreatedAt, isPaymentStatus, isPixModalOpen, isPaymentStep])
 
 	if (!isSession || isPageLoading) {
 		return (

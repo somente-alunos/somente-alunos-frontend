@@ -8,7 +8,8 @@ const Const_studentSessionStorageKey = "somente_alunos_student_session_v1"
 const Const_cartStorageKeyPrefix = "somente_alunos_cart_v1"
 const Const_libraryStorageKeyPrefix = "somente_alunos_library_v1"
 const Const_pendingPaymentStorageKey = "somente_alunos_pending_payment_v1"
-const Const_paymentPollIntervalMs = 2000
+const Const_paymentPollIntervalMs = 3000
+const Const_pendingPaymentMaxAgeMs = 5 * 60 * 1000
 export const Const_paymentPaidEventName = "somente_alunos_payment_paid"
 export const Const_cartClearedEventName = "somente_alunos_cart_cleared"
 export const Const_pendingPaymentUpdatedEventName = "somente_alunos_pending_payment_updated"
@@ -23,6 +24,15 @@ export type Type_pendingPaymentStorage = {
 
 type Type_paymentStatusResponse = {
 	isPaid?: boolean;
+}
+
+function Function_isPendingPaymentExpired(Parameter_pendingPayment: Type_pendingPaymentStorage): boolean {
+	const Const_createdAt = Parameter_pendingPayment.createdAt
+	if (!Number.isFinite(Const_createdAt)) {
+		return true
+	}
+
+	return Date.now() - Const_createdAt > Const_pendingPaymentMaxAgeMs
 }
 
 function Function_getSessionFromStorage(): Type_panelSession | null {
@@ -184,6 +194,10 @@ export function Component_PaymentStatusWatcherClient(): null {
 
 			const Const_pendingPayment = Function_getPendingPaymentFromStorage()
 			if (!Const_pendingPayment?.orderedUuid) {
+				return
+			}
+			if (Function_isPendingPaymentExpired(Const_pendingPayment)) {
+				Function_clearPendingPaymentStorage()
 				return
 			}
 
