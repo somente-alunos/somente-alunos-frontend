@@ -602,7 +602,7 @@ export default function Page_Library(): JSX.Element {
 		}
 	}, [isNeedSuggestionFlow, isSelectionModalOpen, refreshLibrary])
 
-	const Function_downloadViewerFile = useCallback(() => {
+	/* const Function_downloadViewerFile = useCallback(() => {
 		if (!isViewerFileUrl || !isViewerItem || isViewerDownloadLoading) {
 			return
 		}
@@ -629,7 +629,77 @@ export default function Page_Library(): JSX.Element {
 		finally {
 			window.setTimeout(() => setViewerDownloadLoading(false), 250)
 		}
-	}, [isViewerDownloadLoading, isViewerFileMimeType, isViewerFileUrl, isViewerItem])
+	}, [isViewerDownloadLoading, isViewerFileMimeType, isViewerFileUrl, isViewerItem]) */
+
+	const Function_downloadViewerFile = useCallback(async () => {
+		// Validação inicial do novo ambiente (não precisamos mais validar url ou mime type)
+		if (!isViewerItem || isViewerDownloadLoading) {
+			return
+		}
+
+		try {
+			// Ativa o loading do novo ambiente
+			setViewerDownloadLoading(true)
+
+			// Monta a URL para o seu novo endpoint forçando o download em PDF
+			const Const_url = `${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(isViewerItem.content_uuid)}&pdf_download=true`
+
+			// Fetch com a mesma lógica do código antigo
+			const res = await fetch(Const_url, {
+				credentials: 'include'
+			})
+
+			if (!res.ok) throw new Error('Falha no download: ' + res.status)
+
+			const buffer = await res.arrayBuffer()
+
+			// Tenta extrair filename do header Content-Disposition (lógica antiga)
+			let filename = 'download.pdf'
+			try {
+				const cd = res.headers.get('Content-Disposition') || res.headers.get('content-disposition')
+				if (cd) {
+					const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/) // suporta filename* and filename
+					if (match && match[1]) {
+						filename = decodeURIComponent(match[1])
+						console.log('Decoded filename:', filename)
+					}
+				}
+			} catch (e) {
+				// ignore
+			}
+
+			// Fallback: se a API não enviar nome no header, aproveitamos a sua lógica de nome seguro atual
+			if (filename === 'download.pdf' && isViewerItem.name_content) {
+				const Const_fileNameBase = isViewerItem.name_content
+					.trim()
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, "-")
+					.replace(/^-+|-+$/g, "")
+				const Const_fileNameSafe = Const_fileNameBase || `conteudo-${isViewerItem.content_uuid.slice(0, 8)}`
+				filename = `${Const_fileNameSafe}.pdf`
+			}
+
+			// Criação do Blob e download virtual (Cópia exata da lógica antiga)
+			const blob = new Blob([buffer], { type: 'application/pdf' })
+			const link = document?.createElement('a')
+			const objectUrl = URL.createObjectURL(blob)
+			link.href = objectUrl
+			link.download = filename
+			document?.body.appendChild(link)
+			link.click()
+			link.remove()
+			
+			// Small delay to ensure browser begins the download before revoking
+			setTimeout(() => URL.revokeObjectURL(objectUrl), 10000)
+
+		} catch (err) {
+			console.error('Erro ao baixar PDF:', err)
+			// você pode mostrar um toast/alerta aqui se quiser
+		} finally {
+			// Remove o loading respeitando o delay que você já usava no novo ambiente
+			window.setTimeout(() => setViewerDownloadLoading(false), 250)
+		}
+	}, [isViewerDownloadLoading, isViewerItem])
 
 	const Function_handleContinueFromCollege = useCallback(async () => {
 		if (!isSelectedCollegeUuid) {
@@ -1447,7 +1517,7 @@ export default function Page_Library(): JSX.Element {
 						variant="bordered"
 						className="tracking-[0.5px] text-[16px] font-medium border-new-primary text-new-primary active:bg-new-primary active:text-white"
 					>
-						Baixar arquivo
+						Baixar
 					</Button>
 				) : null}
 				floatingAction={isViewerItem && !isViewerItem.isAcquiredContent && !isViewerLoading ? (
