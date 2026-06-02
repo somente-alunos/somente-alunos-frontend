@@ -155,16 +155,11 @@ export type Type_allModifiedList = Type_responseListExamFullOnline & {
 };
 
 export type Type_backendStudent = {
-    student_uuid: string;
-    college_uuid_student: string | null;
-    course_uuid_student: string | null;
-    is_suggested_information_student: 0 | 1;
-};
-
-export type Type_backendCollege = {
-    college_uuid: string;
-    name_college: string;
-    svg_college: string | null;
+	student_uuid: string;
+	college_uuid_student: string | null;
+	course_uuid_student: string | null;
+	is_suggested_information_student: 0 | 1;
+	isAllContentUnlocked: boolean;
 };
 
 export type Type_backendCourse = {

@@ -215,6 +215,8 @@ export default function Page_Library(): JSX.Element {
 	const isViewerFileUrlRef = useRef("")
 	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
 
+	const isAllContentUnlocked = useMemo(() => isSession?.student?.isAllContentUnlocked === true, [isSession?.student?.isAllContentUnlocked])
+
 	const isNeedSuggestionFlow = useMemo(() => {
 		return !!isSession?.student?.is_suggested_information_student
 	}, [isSession])
@@ -1088,6 +1090,12 @@ export default function Page_Library(): JSX.Element {
 				{isViewerError ? (
 					<div className="mb-4 rounded-xl border border-danger-200 bg-danger-50 p-3 text-sm text-danger-700">
 						{isViewerError}
+					</div>
+				) : null}
+
+				{isAllContentUnlocked ? (
+					<div className="mb-4 rounded-xl border border-warning-200 bg-warning-50 p-3 text-sm text-warning-700">
+						✓ Modo de acesso especial ativado - Todos os conteúdos desbloqueados
 					</div>
 				) : null}
 
