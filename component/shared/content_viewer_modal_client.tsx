@@ -31,20 +31,20 @@ type Type_contentViewerModalClientProps = {
 }
 
 const Const_reportReasonOptionArray = [
-	"Nudez ou violencia",
-	"Discurso de odio ou ofensivo",
-	"Conteudo incorreto ou enganoso",
-	"Violacao de direitos autorais",
+	"Nudez ou violência",
+	"Discurso de ódio ou ofensivo",
+	"Conteúdo incorreto ou enganoso",
+	"Violação de direitos autorais",
 	"Outros"
 ] as const
 
 const Const_defaultWarningContent = (
 	<>
-		<strong>Aviso:</strong> Voce tem direito ao reembolso caso o conteudo entregue nao seja o prometido, basta entrar em contato com o{" "}
+		<strong>Aviso:</strong> Você tem direito ao reembolso caso o conteúdo entregue não seja o prometido, basta entrar em contato com o{" "}
 		<Link href="/suporte" className="underline font-semibold">
 			suporte
 		</Link>
-		, queremos criar uma comunidade saudavel.
+		, queremos criar uma comunidade saudável.
 	</>
 )
 
@@ -86,7 +86,7 @@ export function Component_ContentViewerModalClient(
 			return
 		}
 		if (!Const_hasContentUuidToReport) {
-			setReportError("Nao foi possivel identificar o conteudo para denunciar.")
+			setReportError("Não foi possível identificar o conteúdo para denunciar.")
 			return
 		}
 		if (isReportReasonArray.length <= 0) {
@@ -120,7 +120,7 @@ export function Component_ContentViewerModalClient(
 			})
 
 			if (!Const_response.ok) {
-				let Let_errorMessage = "Nao foi possivel enviar a denuncia no momento."
+				let Let_errorMessage = "Não foi possível enviar a denuncia no momento."
 				try {
 					const Const_responseBodyUnknown = await Const_response.json() as { error?: unknown }
 					if (typeof Const_responseBodyUnknown?.error === "string" && Const_responseBodyUnknown.error.trim().length > 0) {
@@ -142,7 +142,7 @@ export function Component_ContentViewerModalClient(
 		}
 		catch {
 			setReportStatus("idle")
-			setReportError("Nao foi possivel enviar a denuncia no momento. Tente novamente em alguns instantes.")
+			setReportError("Não foi possível enviar a denuncia no momento. Tente novamente em alguns instantes.")
 		}
 	}, [Const_hasContentUuidToReport, isReportExtraInformation, isReportReasonArray, isReportStatus, Parameter_props.reportContentUuid])
 
@@ -197,7 +197,7 @@ export function Component_ContentViewerModalClient(
 								disabled={!Const_hasContentUuidToReport || Parameter_props.isLoading}
 								className="mt-1 text-[11px] md:text-[12px] font-normal tracking-[0.1px] text-rose-800 underline underline-offset-2 decoration-rose-800/80 active:text-rose-900 disabled:text-rose-300 disabled:decoration-rose-300"
 							>
-								Denunciar esse conteúdo
+								Denunciar
 							</button>
 
 							<div className="flex gap-2 ml-auto items-center flex-wrap justify-end">
@@ -234,7 +234,7 @@ export function Component_ContentViewerModalClient(
 								<iframe
 									ref={Parameter_props.iframeRef as RefObject<HTMLIFrameElement>}
 									src={Parameter_props.fileUrl}
-									title="Visualizador de conteudo"
+									title="Visualizador de conteúdo"
 									onLoad={Parameter_props.onIframeLoad}
 									className={Parameter_props.isHtmlFile
 										? "!m-0 !p-0 w-full border-0 bg-transparent"
@@ -273,7 +273,7 @@ export function Component_ContentViewerModalClient(
 			>
 				<ModalContent className="rounded-xl max-h-[calc(100svh-24px)] overflow-hidden">
 					<ModalHeader className="flex flex-col gap-1 pb-1">
-						<h2 className="text-lg font-semibold">Denunciar conteudo</h2>
+						<h2 className="text-lg font-semibold">Denunciar conteúdo</h2>
 					</ModalHeader>
 
 					<ModalBody className="gap-3 pb-4 overflow-y-auto">
@@ -290,10 +290,10 @@ export function Component_ContentViewerModalClient(
 							</div>
 						) : isReportStatus === "success" ? (
 							<div className="rounded-lg border border-success-200 bg-success-50 px-4 py-4 text-sm text-success-800 leading-relaxed">
-								Denuncia enviada com sucesso. Um administrador vai revisar o conteudo e, se for confirmado que é nocivo, o conteudo sera removido e o autor sera banido.
+								Denúncia enviada com sucesso. Um administrador vai revisar o conteúdo e, se for confirmado que é nocivo, o conteúdo será removido e o autor será banido.
 								
 								<div className="mt-3">
-										<strong>Obrigado por ajudar a manter a comunidade segura e saudavel!</strong>
+										<strong>Obrigado por ajudar a manter a comunidade segura e saudável!</strong>
 								</div>
 								
 								<div className="mt-3">
@@ -307,7 +307,7 @@ export function Component_ContentViewerModalClient(
 						) : (
 							<>
 								<div className="rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-xs text-warning-800">
-									Se precisar, voce tambem pode{" "}
+									Você também pode{" "}
 									<Link href="/suporte" className="font-semibold underline">
 										falar com o suporte
 									</Link>
@@ -332,14 +332,14 @@ export function Component_ContentViewerModalClient(
 
 								<label className="grid gap-1">
 									<span className="text-sm font-medium text-default-700">
-										Informacoes adicionais (opcional)
+										Informações adicionais (opcional)
 									</span>
 									<textarea
 										value={isReportExtraInformation}
 										onChange={(Parameter_event) => setReportExtraInformation(Parameter_event.target.value)}
 										rows={3}
 										maxLength={4000}
-										placeholder="Descreva detalhes que possam ajudar na analise."
+										placeholder="Descreva detalhes que possam ajudar na análise."
 										className="w-full rounded-lg border border-default-300 bg-white px-3 py-2 text-sm outline-none focus:border-danger-400"
 									/>
 								</label>
@@ -366,7 +366,7 @@ export function Component_ContentViewerModalClient(
 									onClick={() => {
 										Function_handleSubmitReport().catch(() => {
 											setReportStatus("idle")
-											setReportError("Nao foi possivel enviar a denuncia no momento.")
+											setReportError("Não foi possível enviar a denuncia no momento.")
 										})
 									}}
 									isDisabled={!Const_reportCanSubmit}

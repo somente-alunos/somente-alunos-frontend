@@ -138,7 +138,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 			if (Const_response.status === 451) {
 				Const_router.push("/entrar")
 			}
-			throw new Error("Falha ao buscar conteudos postados")
+			throw new Error("Falha ao buscar conteúdos postados")
 		}
 
 		const Const_responseBody = await Const_response.json() as Type_backendStudentPostadoResponse
@@ -173,7 +173,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 			await Function_loadCourseArrayFromCollege(Parameter_collegeUuid)
 		}
 		catch {
-			setPageError("Nao foi possivel carregar os cursos da faculdade selecionada.")
+			setPageError("Não foi possível carregar os cursos da faculdade selecionada.")
 		}
 	}, [Function_loadCourseArrayFromCollege])
 
@@ -224,7 +224,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 						(Parameter_single) => Parameter_single.content_uuid === isEditingContentUuid
 					)
 					if (!Const_contentFound) {
-						setPageError("Nao encontramos esse conteudo para editar.")
+						setPageError("Não encontramos esse conteúdo para editar.")
 						return
 					}
 
@@ -257,7 +257,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 			}
 			catch {
 				if (Const_isMounted) {
-					setPageError("Nao foi possivel carregar os dados para postagem agora.")
+					setPageError("Não foi possível carregar os dados para postagem agora.")
 				}
 			}
 			finally {
@@ -291,7 +291,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 		const Const_currentPriceContent = Number(Const_priceNormalized)
 
 		if (!Const_nameContent || !Const_collegeUuidContent || !Const_courseUuidContent || !(Const_currentPriceContent > 0)) {
-			setPageError("Preencha nome, preco, faculdade e curso corretamente.")
+			setPageError("Preencha nome, preço, faculdade e curso corretamente.")
 			return
 		}
 
@@ -332,7 +332,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 						Const_router.push("/entrar")
 						return
 					}
-					throw new Error("Falha ao atualizar conteudo")
+					throw new Error("Falha ao atualizar conteúdo")
 				}
 			}
 			else {
@@ -361,13 +361,13 @@ export default function Page_ConteudoNovo(): JSX.Element {
 						Const_router.push("/entrar")
 						return
 					}
-					throw new Error("Falha ao criar conteudo")
+					throw new Error("Falha ao criar conteúdo")
 				}
 
 				const Const_responseBodyCreate = await Const_responseCreate.json() as Type_backendStudentConteudoResponse
 				Let_contentUuid = Const_responseBodyCreate?.content?.content_uuid || ""
 				if (!Let_contentUuid) {
-					throw new Error("Conteudo criado sem UUID de retorno")
+					throw new Error("Conteúdo criado sem UUID de retorno")
 				}
 			}
 
@@ -388,7 +388,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 							Const_router.push("/entrar")
 							return
 						}
-						throw new Error("Falha ao enviar arquivo de conteudo")
+						throw new Error("Falha ao enviar arquivo de conteúdo")
 					}
 
 					await Const_responseFile.json() as Type_backendStudentConteudoFileResponse
@@ -402,13 +402,13 @@ export default function Page_ConteudoNovo(): JSX.Element {
 				}
 			}
 
-			setPageSuccess(isEditingMode ? "Conteudo atualizado com sucesso." : "Conteudo publicado com sucesso.")
+			setPageSuccess(isEditingMode ? "Conteúdo atualizado com sucesso." : "Conteúdo publicado com sucesso.")
 			setTimeout(() => {
 				Const_router.push("/postar")
 			}, 400)
 		}
 		catch {
-			setPageError("Nao foi possivel salvar esse conteudo agora.")
+			setPageError("Não foi possível salvar esse conteúdo agora.")
 		}
 		finally {
 			setSubmitLoading(false)
@@ -461,19 +461,19 @@ export default function Page_ConteudoNovo(): JSX.Element {
 							<section className="rounded-2xl border border-default-200 bg-white p-4 sm:p-6">
 								<div className="mb-6 flex flex-col">
 									<h1 className="text-2xl font-semibold">
-										{isEditingMode ? "Editar conteudo" : "Postar novo conteudo"}
+										{isEditingMode ? "Editar conteúdo" : "Postar novo conteúdo"}
 									</h1>
 									<span className="text-sm text-default-500">
 										{isEditingMode
 											? "Atualize os campos abaixo e salve suas alteracoes."
-											: "Preencha os campos para publicar um novo conteudo."}
+											: "Preencha os campos para publicar um novo conteúdo."}
 									</span>
 								</div>
 								<div className="mb-4 rounded-xl border border-warning-200 bg-warning-50 p-3 text-sm text-warning-800">
-									Apos enviar o conteudo, aguarde ate 24 horas para ele ser aprovado ou rejeitado por um administrador.
+									Após enviar o conteúdo, aguarde ate 24 horas para ele ser aprovado ou rejeitado por um administrador.
 								</div>
 								<div className="mb-4 rounded-xl border border-default-300 bg-default-50 p-3 text-sm text-default-700">
-									Ficamos com 3% do valor de cada transacao para fins de manutenção. O valor da compra e liberado para voce apos 7 dias, para dar tempo do cliente pedir reembolso caso queira.
+									Ficamos com 3% do valor de cada transação para fins de manutenção. O valor da compra e liberado para você apos 7 dias, para dar tempo do cliente pedir reembolso caso queira.
 								</div>
 
 								{isPageError ? (
@@ -495,7 +495,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 								) : (isEditingMode && !isCurrentContent) ? (
 									<div className="py-14 sm:py-16 flex flex-col items-center gap-3 text-center">
 										<p className="text-sm sm:text-base font-medium text-default-700">
-											Nao foi possivel carregar esse conteudo para edicao.
+											Não foi possível carregar esse conteúdo para edição.
 										</p>
 										<Button
 											color="default"
@@ -513,7 +513,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 										Function_handleSubmitContent(Parameter_event).catch(() => undefined)
 									}}>
 										<label className="flex flex-col gap-1 md:col-span-2">
-											<span className="text-sm font-medium text-default-700">Nome do conteudo</span>
+											<span className="text-sm font-medium text-default-700">Nome do conteúdo</span>
 											<input
 												className="w-full rounded-xl border border-default-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
 												value={isNameContent}
@@ -524,7 +524,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 										</label>
 
 										<label className="flex flex-col gap-1">
-											<span className="text-sm font-medium text-default-700">Preco (R$)</span>
+											<span className="text-sm font-medium text-default-700">Preço (R$)</span>
 											<input
 												className="w-full rounded-xl border border-default-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
 												value={isCurrentPriceContent}
@@ -536,7 +536,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 										</label>
 
 										<label className="flex flex-col gap-1">
-											<span className="text-sm font-medium text-default-700">Previsao (opcional)</span>
+											<span className="text-sm font-medium text-default-700">Previsão (opcional)</span>
 											<input
 												className="w-full rounded-xl border border-default-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
 												type="date"
@@ -603,8 +603,8 @@ export default function Page_ConteudoNovo(): JSX.Element {
 												{isPreviewFile
 													? `Novo arquivo: ${isPreviewFile.name}`
 													: isCurrentContent?.preview_file_uuid_content
-														? "Arquivo atual: preview ja enviado"
-														: "Arquivo atual: sem preview"}
+														? "Arquivo atual: prévia ja enviado"
+														: "Arquivo atual: sem prévia"}
 											</span>
 										</label>
 
@@ -649,7 +649,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 												className="font-semibold min-w-[180px] active:bg-primary-500 active:text-white"
 												startContent={isEditingMode ? <Save size={16} /> : <Check size={16} />}
 											>
-												{isEditingMode ? "Salvar alteracoes" : "Publicar conteudo"}
+												{isEditingMode ? "Salvar alteracoes" : "Publicar conteúdo"}
 											</Button>
 										</div>
 									</form>

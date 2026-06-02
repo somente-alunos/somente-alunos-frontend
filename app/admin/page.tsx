@@ -1826,7 +1826,7 @@ export default function Page_Admin(): JSX.Element {
 								spellCheck={false}
 							/>
 							<div className="flex flex-wrap gap-2">
-								<button onClick={Function_getAdminContent} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">Executar GET conteudo</button>
+								<button onClick={Function_getAdminContent} className="rounded-lg bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950">Executar GET conteúdo</button>
 								<button onClick={() => setGetAdminConteudoQueryJson(Const_getAdminConteudoQueryExample)} className="rounded-lg border border-slate-500 px-3 py-2 text-sm font-semibold">Restaurar exemplo completo</button>
 								<button onClick={Function_fillGetAdminConteudoQueryNow} className="rounded-lg border border-slate-500 px-3 py-2 text-sm font-semibold">Preencher datas com hora atual</button>
 							</div>

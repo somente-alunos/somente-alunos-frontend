@@ -105,7 +105,7 @@ export default function Page_Carteira(): JSX.Element {
 			setReceivedAmount(typeof Const_responseBody.receivedAmount === "number" ? Const_responseBody.receivedAmount : 0)
 		}
 		catch {
-			setPageError("Nao foi possivel carregar sua carteira agora.")
+			setPageError("Não foi possível carregar sua carteira agora.")
 		}
 		finally {
 			setWalletLoading(false)
@@ -182,7 +182,7 @@ export default function Page_Carteira(): JSX.Element {
 								</div>
 							</div>
 							<div className="mb-4 rounded-xl border border-default-300 bg-default-50 p-3 text-sm text-default-700">
-								Ficamos com 3% do valor de cada transacao para fins de manutenção. O valor da compra e liberado para voce apos 7 dias, para dar tempo do cliente pedir reembolso caso queira.
+								Ficamos com 3% do valor de cada transacao para fins de manutenção. O valor da compra e liberado para você apos 7 dias, para dar tempo do cliente pedir reembolso caso queira.
 							</div>
 
 							{isPageError ? (
@@ -222,13 +222,13 @@ export default function Page_Carteira(): JSX.Element {
 										<Banknote size={22} />
 									</div>
 									<p className="text-sm sm:text-base font-medium text-default-700">
-										Voce ainda nao tem vendas na carteira.
+										Você ainda não tem vendas na carteira.
 									</p>
 								</div>
 							) : (
 								<div className="grid grid-cols-1 gap-4">
 									{isSoldArray.map((Let_saleSingle) => {
-										const Const_contentName = Let_saleSingle.informationContentSaleHistory?.name_content || "Conteudo sem nome"
+										const Const_contentName = Let_saleSingle.informationContentSaleHistory?.name_content || "Conteúdo sem nome"
 										const Const_isCompletedSale = Let_saleSingle.statusSaleHistory === "completed"
 										return (
 											<div
@@ -253,7 +253,7 @@ export default function Page_Carteira(): JSX.Element {
 													<span className={`inline-flex min-h-8 items-center rounded-full px-3 text-sm font-medium ${
 														Const_isCompletedSale ? "bg-success-100 text-success-700" : "bg-default-200 text-default-700"
 													}`}>
-														{Const_isCompletedSale ? "Venda concluida" : "Venda em analise"}
+														{Const_isCompletedSale ? "Venda concluida" : "Venda em análise"}
 													</span>
 													<span className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 text-sm font-medium ${
 														Let_saleSingle.paidToSellerSaleHistory ? "bg-success-100 text-success-700" : "bg-warning-100 text-warning-700"

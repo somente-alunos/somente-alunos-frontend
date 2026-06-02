@@ -195,22 +195,22 @@ export default function Page_Carrinho(): JSX.Element {
 
 	const isCartContentLabel = useMemo(() => {
 		if (isCartArray.length === 1) {
-			return "1 conteudo"
+			return "1 conteúdo"
 		}
 
-		return `${isCartArray.length} conteudos`
+		return `${isCartArray.length} conteúdos`
 	}, [isCartArray.length])
 
 	const isUnlockButtonLabel = useMemo(() => {
-		return isCartArray.length === 1 ? "Desbloquear conteudo" : "Desbloquear conteudos"
+		return isCartArray.length === 1 ? "Desbloquear conteúdo" : "Desbloquear conteúdos"
 	}, [isCartArray.length])
 
 	const isCheckoutHeadline = useMemo(() => {
 		if (isCartArray.length === 1) {
-			return isCartArray[0]?.name_content || "Conteudo selecionado"
+			return isCartArray[0]?.name_content || "Conteúdo selecionado"
 		}
 
-		return `${isCartArray.length} conteudos selecionados`
+		return `${isCartArray.length} conteúdos selecionados`
 	}, [isCartArray])
 
 	const Function_setCartArrayIfDifferent = useCallback((Parameter_nextCartArray: Type_cartDisplayContent[]): void => {
@@ -250,7 +250,7 @@ export default function Page_Carrinho(): JSX.Element {
 			Function_saveCartOnStorage(isCartStorageKey, Const_serverCartArray)
 		}
 		catch {
-			setPageError("Nao foi possivel carregar seu carrinho agora.")
+			setPageError("Não foi possível carregar seu carrinho agora.")
 		}
 		finally {
 			if (Parameter_showLoading) {
@@ -328,7 +328,7 @@ export default function Page_Carrinho(): JSX.Element {
 					return
 				}
 
-				throw new Error("Falha ao remover conteudo do carrinho")
+				throw new Error("Falha ao remover conteúdo do carrinho")
 			}
 
 			const Const_responseBody = await Const_response.json() as Type_cartResponse
@@ -337,7 +337,7 @@ export default function Page_Carrinho(): JSX.Element {
 			Function_saveCartOnStorage(isCartStorageKey, Const_serverCartArray)
 		}
 		catch {
-			setPageError("Nao foi possivel remover esse conteudo agora.")
+			setPageError("Não foi possível remover esse conteúdo agora.")
 		}
 		finally {
 			setRemoveLoadingUuid("")
@@ -370,7 +370,7 @@ export default function Page_Carrinho(): JSX.Element {
 					return
 				}
 
-				throw new Error("Falha ao carregar previa do conteudo")
+				throw new Error("Falha ao carregar prévia do conteúdo")
 			}
 
 			const Const_blob = await Const_response.blob()
@@ -381,7 +381,7 @@ export default function Page_Carrinho(): JSX.Element {
 			setViewerFileMimeType((Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase())
 		}
 		catch {
-			setViewerError("Nao foi possivel abrir a previa desse conteudo agora.")
+			setViewerError("Não foi possível abrir a prévia desse conteúdo agora.")
 		}
 		finally {
 			setViewerLoading(false)
@@ -501,14 +501,14 @@ export default function Page_Carrinho(): JSX.Element {
 			const Const_responseBody = await Const_response.json() as Type_backendStudentPixPaymentResponse
 			const Const_pixCopiaECola = Const_responseBody?.pixCopiaECola || ""
 			if (!Const_pixCopiaECola) {
-				throw new Error("Pix nao retornado")
+				throw new Error("Pix não retornado")
 			}
 
 			setPixCode(Const_pixCopiaECola)
-			setPixMessage("Pix gerado com sucesso. Finalize o pagamento para liberar os conteudos.")
+			setPixMessage("Pix gerado com sucesso. Finalize o pagamento para liberar os conteúdos.")
 		}
 		catch {
-			setPixMessage("Nao foi possivel gerar o Pix agora. Tente novamente.")
+			setPixMessage("Não foi possível gerar o Pix agora. Tente novamente.")
 		}
 		finally {
 			setPixGenerating(false)
@@ -587,7 +587,7 @@ export default function Page_Carrinho(): JSX.Element {
 				) : null}
 
 				<div className="mb-3 text-sm font-semibold text-default-700">
-					{isCartArray.length === 1 ? "Conteudo do carrinho:" : "Conteudos do carrinho:"}
+					{isCartArray.length === 1 ? "Conteúdo do carrinho:" : "Conteúdos do carrinho:"}
 				</div>
 
 				{isCartLoading ? (
@@ -597,7 +597,7 @@ export default function Page_Carrinho(): JSX.Element {
 				) : isCartArray.length <= 0 ? (
 					<div className="rounded-2xl border border-default-200 bg-background py-14 sm:py-16 text-center px-4">
 						<p className="text-base font-medium text-default-700">
-							Seu carrinho esta vazio.
+							Seu carrinho está vazio.
 						</p>
 					</div>
 				) : (
@@ -617,7 +617,7 @@ export default function Page_Carrinho(): JSX.Element {
 								}
 
 								Function_openPreview(Let_contentSingle).catch(() => {
-									setPageError("Nao foi possivel abrir a previa desse conteudo agora.")
+									setPageError("Não foi possível abrir a prévia desse conteúdo agora.")
 								})
 							}
 
@@ -672,7 +672,7 @@ export default function Page_Carrinho(): JSX.Element {
 										onClick={(Parameter_event) => {
 											Parameter_event.stopPropagation()
 											Function_removeCartItem(Let_contentSingle).catch(() => {
-												setPageError("Nao foi possivel remover esse conteudo agora.")
+												setPageError("Não foi possível remover esse conteúdo agora.")
 											})
 										}}
 									>
@@ -690,7 +690,7 @@ export default function Page_Carrinho(): JSX.Element {
 										}`}>
 											{Let_contentSingle.verified_content === 1
 												? "Verificado"
-												: "Nao verificado"}
+												: "Não verificado"}
 										</span>
 									</div> */}
 
@@ -799,7 +799,7 @@ export default function Page_Carrinho(): JSX.Element {
 														color="primary"
 														onPress={() => {
 														Function_handlePixPayment().catch(() => {
-															setPixMessage("Nao foi possivel gerar o Pix agora.")
+															setPixMessage("Não foi possível gerar o Pix agora.")
 														})
 													}}
 												>
@@ -873,7 +873,7 @@ export default function Page_Carrinho(): JSX.Element {
 													<div className="p-4 bg-white rounded-xl border-2 border-primary/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
 														{isPixCode ? <QRCode value={isPixCode} size={200} /> : (
 															<div className="h-[200px] w-[200px] flex items-center justify-center text-center text-sm text-default-500 px-4">
-																Nao foi possivel gerar o QR Code.
+																Não foi possível gerar o QR Code.
 															</div>
 														)}
 													</div>

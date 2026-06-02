@@ -281,13 +281,13 @@ export default function Page_Library(): JSX.Element {
 	const isLibrarySummaryCollegeName = useMemo(() => {
 		const Const_collegeUuid = isSelectedCollegeUuid || isSession?.student?.college_uuid_student || ""
 		const Const_collegeFound = isCollegeArray.find((Parameter_single) => Parameter_single.college_uuid === Const_collegeUuid)
-		return Const_collegeFound?.name_college || "Nao definido"
+		return Const_collegeFound?.name_college || "Não definido"
 	}, [isSelectedCollegeUuid, isSession, isCollegeArray])
 
 	const isLibrarySummaryCourseName = useMemo(() => {
 		const Const_courseUuid = isSelectedCourseUuid || isSession?.student?.course_uuid_student || ""
 		const Const_courseFound = isCourseArray.find((Parameter_single) => Parameter_single.course_uuid === Const_courseUuid)
-		return Const_courseFound?.name_course || "Nao definido"
+		return Const_courseFound?.name_course || "Não definido"
 	}, [isSelectedCourseUuid, isSession, isCourseArray])
 
 	const isLibraryGroupedContent = useMemo(() => {
@@ -456,14 +456,14 @@ export default function Page_Library(): JSX.Element {
 					return
 				}
 
-				throw new Error("Falha ao adicionar conteudo no carrinho")
+				throw new Error("Falha ao adicionar conteúdo no carrinho")
 			}
 
 			setNavigationLoadingTarget("carrinho")
 			Const_router.push("/carrinho")
 		}
 		catch {
-			setViewerError("Nao foi possivel adicionar esse conteudo no carrinho agora.")
+			setViewerError("Não foi possível adicionar esse conteúdo no carrinho agora.")
 		}
 		finally {
 			setCartActionLoadingUuid("")
@@ -475,7 +475,7 @@ export default function Page_Library(): JSX.Element {
 		setViewerError("")
 
 		const Const_response = await fetch(
-			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`,
+			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteúdo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`,
 			{ credentials: "include" }
 		)
 		if (!Const_response.ok) {
@@ -550,7 +550,7 @@ export default function Page_Library(): JSX.Element {
 			await Function_loadViewerFile(Parameter_content)
 		}
 		catch {
-			setViewerError("Nao foi possivel abrir o conteúdo agora.")
+			setViewerError("Não foi possível abrir o conteúdo agora.")
 		}
 		finally {
 			setViewerLoading(false)
@@ -651,7 +651,7 @@ export default function Page_Library(): JSX.Element {
 				await Function_loadCourseArrayByCollege(isSelectedCollegeUuid, Const_preferredCourse)
 			}
 			catch {
-				setSelectionModalError("Nao foi possivel carregar os cursos dessa faculdade.")
+				setSelectionModalError("Não foi possível carregar os cursos dessa faculdade.")
 				return
 			}
 			finally {
@@ -718,7 +718,7 @@ export default function Page_Library(): JSX.Element {
 			setSelectionModalStep("college")
 		}
 		catch {
-			setSelectionModalError("Nao foi possivel salvar a faculdade e o curso.")
+			setSelectionModalError("Não foi possível salvar a faculdade e o curso.")
 		}
 		finally {
 			setSelectionStepLoading(false)
@@ -777,7 +777,7 @@ export default function Page_Library(): JSX.Element {
 				}
 			}
 			catch {
-				setViewerError("Nao foi possivel carregar os dados iniciais da biblioteca.")
+				setViewerError("Não foi possível carregar os dados iniciais da biblioteca.")
 			}
 			finally {
 				if (Const_isMounted) {
@@ -869,7 +869,7 @@ export default function Page_Library(): JSX.Element {
 			}
 
 			Function_openViewer(Let_contentSingle.raw_content).catch(() => {
-				setViewerError("Nao foi possivel abrir o conteudo agora.")
+				setViewerError("Não foi possível abrir o conteúdo agora.")
 			})
 		}
 
@@ -926,7 +926,7 @@ export default function Page_Library(): JSX.Element {
 					}`}>
 						{Let_contentSingle.verified_content === 1
 							? "Verificado"
-							: "Nao verificado"}
+							: "Não verificado"}
 					</span>
 
 					{Const_isNonAcquiredAvailable && Let_contentSingle.old_price_content > 0 &&
@@ -994,7 +994,7 @@ export default function Page_Library(): JSX.Element {
 									}
 
 									Function_addContentToCartAndGo(Let_contentSingle.raw_content).catch(() => {
-										setViewerError("Nao foi possivel adicionar esse conteudo no carrinho agora.")
+										setViewerError("Não foi possível adicionar esse conteúdo no carrinho agora.")
 									})
 								}}
 							>
@@ -1080,7 +1080,7 @@ export default function Page_Library(): JSX.Element {
 							{/* {isLibrarySummaryCollegeName} -  */}{isLibrarySummaryCourseName}
 						</div>
 						{/* <div>
-							{isLibraryContentDisplayArray.length} conteudos encontrados
+							{isLibraryContentDisplayArray.length} conteúdos encontrados
 						</div> */}
 					</div>
 				</div>
@@ -1096,7 +1096,7 @@ export default function Page_Library(): JSX.Element {
 						<div className="relative flex items-center justify-center">
 							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 							<span className="mx-3 rounded-full border border-default-300 bg-default-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-default-600">
-								Conteudos em destaque
+								Conteúdos em destaque
 							</span>
 							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 						</div>
@@ -1124,7 +1124,7 @@ export default function Page_Library(): JSX.Element {
 						<div className="relative flex items-center justify-center">
 							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 							<span className="mx-3 rounded-full border border-default-300 bg-default-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-default-600">
-								Conteudos antigos
+								Conteúdos antigos
 							</span>
 							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 						</div>
@@ -1192,7 +1192,7 @@ export default function Page_Library(): JSX.Element {
 									isPressable
 									onPress={() => {
 										Function_openViewer(Let_contentSingle).catch(() => {
-											setViewerError("Nao foi possivel abrir o conteúdo agora.")
+											setViewerError("Não foi possível abrir o conteúdo agora.")
 										})
 									}}
 									className="border border-default-200"
@@ -1205,7 +1205,7 @@ export default function Page_Library(): JSX.Element {
 									</CardHeader>
 									<CardBody className="pt-1">
 										<div className="flex items-center justify-between">
-											<span className="text-sm text-default-600">Preco</span>
+											<span className="text-sm text-default-600">Preço</span>
 											<span className="text-lg font-bold text-success">
 												R$ {Let_contentSingle.current_price_content.toFixed(2).replace(".", ",")}
 											</span>
@@ -1213,7 +1213,7 @@ export default function Page_Library(): JSX.Element {
 									</CardBody>
 									<CardFooter className="pt-0 flex items-center justify-between">
 										<span className={`text-xs font-semibold ${Let_contentSingle.isAcquiredContent ? "text-success" : "text-warning-700"}`}>
-											{Let_contentSingle.isAcquiredContent ? "Conteudo adquirido" : "Previa disponivel"}
+											{Let_contentSingle.isAcquiredContent ? "Conteúdo adquirido" : "Previa disponivel"}
 										</span>
 										<Button
 											size="sm"
@@ -1389,7 +1389,7 @@ export default function Page_Library(): JSX.Element {
 									endContent={<ArrowRight size={16} />}
 									onClick={() => {
 										Function_handleContinueFromCollege().catch(() => {
-											setSelectionModalError("Nao foi possivel continuar.")
+											setSelectionModalError("Não foi possível continuar.")
 										})
 									}}
 									isDisabled={!isSelectedCollegeUuid || isSelectionStepLoading}
@@ -1405,7 +1405,7 @@ export default function Page_Library(): JSX.Element {
 									endContent={<Check size={16} />}
 									onClick={() => {
 										Function_handleFinalizeSelection().catch(() => {
-											setSelectionModalError("Nao foi possivel finalizar.")
+											setSelectionModalError("Não foi possível finalizar.")
 										})
 									}}
 									isDisabled={!isSelectedCourseUuid || isSelectionStepLoading}
@@ -1446,7 +1446,7 @@ export default function Page_Library(): JSX.Element {
 					<Button
 						onClick={() => {
 							Function_addContentToCartAndGo(isViewerItem).catch(() => {
-								setViewerError("Nao foi possivel adicionar esse conteudo no carrinho agora.")
+								setViewerError("Não foi possível adicionar esse conteúdo no carrinho agora.")
 							})
 						}}
 						isLoading={isCartActionLoadingUuid === isViewerItem.content_uuid}

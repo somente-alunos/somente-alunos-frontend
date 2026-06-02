@@ -103,14 +103,14 @@ export default function Page_Postar(): JSX.Element {
 					Const_router.push("/entrar")
 					return
 				}
-				throw new Error("Falha ao carregar conteudos postados")
+				throw new Error("Falha ao carregar conteúdos postados")
 			}
 
 			const Const_responseBody = await Const_response.json() as Type_backendStudentPostadoResponse
 			setPostedContentArray(Array.isArray(Const_responseBody.contentArray) ? Const_responseBody.contentArray : [])
 		}
 		catch {
-			setPageError("Nao foi possivel carregar suas postagens agora.")
+			setPageError("Não foi possível carregar suas postagens agora.")
 		}
 		finally {
 			setLoadingPostedContentArray(false)
@@ -185,7 +185,7 @@ export default function Page_Postar(): JSX.Element {
 					Const_router.push("/entrar")
 					return
 				}
-				throw new Error("Falha ao excluir conteudo")
+				throw new Error("Falha ao excluir conteúdo")
 			}
 
 			const Const_deletedContentName = isDeleteTargetContent.name_content
@@ -193,11 +193,11 @@ export default function Page_Postar(): JSX.Element {
 			setPostedContentArray((Parameter_previousArray) => {
 				return Parameter_previousArray.filter((Parameter_single) => Parameter_single.content_uuid !== Const_deletedContentUuid)
 			})
-			setPageSuccess(`Conteudo "${Const_deletedContentName}" excluido com sucesso.`)
+			setPageSuccess(`Conteúdo "${Const_deletedContentName}" excluido com sucesso.`)
 			setDeleteTargetContent(null)
 		}
 		catch {
-			setPageError("Nao foi possivel excluir esse conteudo agora.")
+			setPageError("Não foi possível excluir esse conteúdo agora.")
 		}
 		finally {
 			setDeleteLoading(false)
@@ -254,7 +254,7 @@ export default function Page_Postar(): JSX.Element {
 									isDisabled={!!isNavigationLoadingTarget}
 									onClick={() => Function_navigateWithFeedback("/conteudo-novo", "novo")}
 								>
-									Postar novo Conteudo
+									Postar novo Conteúdo
 								</Button>
 							</div>
 
@@ -282,7 +282,7 @@ export default function Page_Postar(): JSX.Element {
 											<Files size={22} />
 										</div>
 										<p className="text-sm sm:text-base font-medium text-default-700">
-											Voce não postou nenhum conteúdo ainda
+											Você não postou nenhum conteúdo ainda
 										</p>
 									</div>
 								) : (
@@ -307,7 +307,7 @@ export default function Page_Postar(): JSX.Element {
 												</CardHeader>
 												<CardBody className="pt-1">
 													<div className="flex items-center justify-between">
-														<span className="text-sm text-default-600">Preco atual</span>
+														<span className="text-sm text-default-600">Preço atual</span>
 														<span className="text-lg font-bold text-success">
 															R$ {Let_contentSingle.current_price_content.toFixed(2).replace(".", ",")}
 														</span>
@@ -333,7 +333,7 @@ export default function Page_Postar(): JSX.Element {
 														isLoading={isNavigationLoadingTarget === `editar:${Let_contentSingle.content_uuid}`}
 														isDisabled={!!isNavigationLoadingTarget}
 													>
-														Editar conteudo
+														Editar conteúdo
 													</Button>
 												</CardFooter>
 											</Card>
@@ -348,7 +348,7 @@ export default function Page_Postar(): JSX.Element {
 									<h1 className="text-2xl font-semibold">Minhas postagens</h1>
 								</div>
 								<div className="mt-1 text-sm text-default-600">
-									<span className="font-medium">{isPostedContentArray.length} conteudos encontrados</span>
+									<span className="font-medium">{isPostedContentArray.length} conteúdos encontrados</span>
 								</div>
 							</div>
 
@@ -374,7 +374,7 @@ export default function Page_Postar(): JSX.Element {
 										<Files size={22} />
 									</div>
 									<p className="text-sm sm:text-base font-medium text-default-700">
-										Voce nao postou nenhum conteudo ainda.
+										Você não postou nenhum conteúdo ainda.
 									</p>
 								</div>
 							) : (
@@ -445,7 +445,7 @@ export default function Page_Postar(): JSX.Element {
 													}`}>
 														{Let_contentSingle.verified_content === 1
 															? "Verificado"
-															: "Nao verificado"}
+															: "Não verificado"}
 													</span>
 												</div>
 												{Const_hasPreviewOnly ? (
@@ -479,7 +479,7 @@ export default function Page_Postar(): JSX.Element {
 															Function_openEditPage()
 														}}
 													>
-														Editar conteudo
+														Editar conteúdo
 													</Button>
 													<Button
 														size="md"
@@ -493,7 +493,7 @@ export default function Page_Postar(): JSX.Element {
 															Function_openDeleteModal(Let_contentSingle)
 														}}
 													>
-														Excluir conteudo
+														Excluir conteúdo
 													</Button>
 												</div>
 											</div>
@@ -519,10 +519,10 @@ export default function Page_Postar(): JSX.Element {
 				hideCloseButton
 			>
 				<ModalContent>
-					<ModalHeader>Excluir conteudo</ModalHeader>
+					<ModalHeader>Excluir conteúdo</ModalHeader>
 					<ModalBody>
 						<p className="text-sm text-default-700">
-							Voce quer excluir o conteudo{" "}
+							Você quer excluir o conteúdo{" "}
 							<span className="font-semibold">{isDeleteTargetContent?.name_content || ""}</span>?
 						</p>
 					</ModalBody>
@@ -543,7 +543,7 @@ export default function Page_Postar(): JSX.Element {
 							isLoading={isDeleteLoading}
 							onClick={() => {
 								Function_confirmDeleteContent().catch(() => {
-									setPageError("Nao foi possivel excluir esse conteudo agora.")
+									setPageError("Não foi possível excluir esse conteúdo agora.")
 								})
 							}}
 						>
