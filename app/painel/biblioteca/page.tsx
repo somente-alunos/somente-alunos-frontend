@@ -283,13 +283,13 @@ export default function Page_Library(): JSX.Element {
 	const isLibrarySummaryCollegeName = useMemo(() => {
 		const Const_collegeUuid = isSelectedCollegeUuid || isSession?.student?.college_uuid_student || ""
 		const Const_collegeFound = isCollegeArray.find((Parameter_single) => Parameter_single.college_uuid === Const_collegeUuid)
-		return Const_collegeFound?.name_college || "Não definido"
+		return Const_collegeFound?.name_college || ""
 	}, [isSelectedCollegeUuid, isSession, isCollegeArray])
 
 	const isLibrarySummaryCourseName = useMemo(() => {
 		const Const_courseUuid = isSelectedCourseUuid || isSession?.student?.course_uuid_student || ""
 		const Const_courseFound = isCourseArray.find((Parameter_single) => Parameter_single.course_uuid === Const_courseUuid)
-		return Const_courseFound?.name_course || "Não definido"
+		return Const_courseFound?.name_course || ""
 	}, [isSelectedCourseUuid, isSession, isCourseArray])
 
 	const isLibraryGroupedContent = useMemo(() => {
