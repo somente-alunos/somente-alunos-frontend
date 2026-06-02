@@ -221,9 +221,9 @@ export type Type_backendStudentConteudoFileResponse = {
 };
 
 export type Type_backendStudentPixPaymentResponse = {
-    pixCopiaECola: string;
+    pixCopiaECola?: string;
     contentUuidArray: Array<string>;
-    orderedUuid?: string;
+    orderedUuid: string;
     payment_url?: string;
 };
 

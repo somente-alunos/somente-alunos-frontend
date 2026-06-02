@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 //import { Inter } from "next/font/google";
 import "./globals.css";
+import { Component_PaymentStatusWatcherClient } from "./payment_status_watcher_client";
 
 //const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +21,9 @@ export default function RootLayout({
       <head>
         <meta name="facebook-domain-verification" content="o8hhyl17535fubkuojgsju8cdqoi22" />
       </head>
-      <body /* className={inter.className} */>{children}
+      <body /* className={inter.className} */>
+        <Component_PaymentStatusWatcherClient />
+        {children}
       </body>
     </html>
   );

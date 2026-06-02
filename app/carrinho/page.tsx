@@ -3,6 +3,11 @@
 export const runtime = "edge"
 
 import { Type_panelSession } from "@/app/painel/layout_context"
+import {
+	Const_cartClearedEventName,
+	Const_paymentPaidEventName,
+	Function_savePendingPayment
+} from "@/app/payment_status_watcher_client"
 import { Component_HeaderIdChatbotContentServer } from "@/component/(path_[id-chatbot])/layout_[id-chatbot]/ui/header_[id-chatbot]/header_[id-chatbot]_content_server"
 import { Component_ContentViewerModalClient } from "@/component/shared/content_viewer_modal_client"
 import {
@@ -643,6 +648,13 @@ export default function Page_Carrinho(): JSX.Element {
 
 			setPixCode(Const_pixCopiaECola)
 			setOrderedUuid(Const_orderedUuid)
+			Function_savePendingPayment({
+				orderedUuid: Const_orderedUuid,
+				contentUuidArray: Array.isArray(Const_responseBody?.contentUuidArray) ? Const_responseBody.contentUuidArray : Const_contentUuidArray,
+				studentUuid: isSession?.student?.student_uuid || "",
+				method: "pix",
+				createdAt: Date.now()
+			})
 			setPixMessage("Pix gerado com sucesso. Finalize o pagamento para liberar os conteúdos.")
 		}
 		catch {
@@ -652,7 +664,71 @@ export default function Page_Carrinho(): JSX.Element {
 		finally {
 			setPixGenerating(false)
 		}
-	}, [Const_router, Function_clearPaymentTimers, isCartArray, isPixGenerating])
+	}, [Const_router, Function_clearPaymentTimers, isCartArray, isPixGenerating, isSession])
+
+	const Function_generateCardCredit = useCallback(async (): Promise<void> => {
+		if (isPixGenerating || isCartArray.length <= 0) {
+			return
+		}
+
+		try {
+			setPixGenerating(true)
+			setPaymentStatus("waiting")
+			isPaymentConfirmedRef.current = false
+			setPixMessage("")
+			setOrderedUuid("")
+			Function_clearPaymentTimers()
+
+			const Const_contentUuidArray = isCartArray.map((Parameter_single) => Parameter_single.content_uuid)
+			if (Const_contentUuidArray.length <= 0) {
+				throw new Error("Carrinho vazio")
+			}
+
+			const Const_response = await fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/post/student/gerar-cobranca`, {
+				method: "POST",
+				headers: { "content-type": "application/json; charset=utf-8" },
+				credentials: "include",
+				body: JSON.stringify({
+					method: "card_credit",
+					contentUuidArray: Const_contentUuidArray
+				})
+			})
+			if (!Const_response.ok) {
+				if (Const_response.status === 451) {
+					Const_router.push("/entrar")
+					return
+				}
+
+				throw new Error("Falha ao gerar pagamento por cartao")
+			}
+
+			const Const_responseBody = await Const_response.json() as Type_backendStudentPixPaymentResponse
+			const Const_paymentUrl = Const_responseBody?.payment_url || ""
+			const Const_orderedUuid = Const_responseBody?.orderedUuid || ""
+			if (!Const_paymentUrl) {
+				throw new Error("Link de pagamento nao retornado")
+			}
+			if (!Const_orderedUuid) {
+				throw new Error("Identificador da cobranca nao retornado")
+			}
+
+			Function_savePendingPayment({
+				orderedUuid: Const_orderedUuid,
+				contentUuidArray: Array.isArray(Const_responseBody?.contentUuidArray) ? Const_responseBody.contentUuidArray : Const_contentUuidArray,
+				studentUuid: isSession?.student?.student_uuid || "",
+				method: "card_credit",
+				createdAt: Date.now()
+			})
+			window.location.href = Const_paymentUrl
+		}
+		catch {
+			setPaymentStatus("error")
+			setPixMessage("Nao foi possivel abrir o pagamento por cartao agora. Tente novamente.")
+		}
+		finally {
+			setPixGenerating(false)
+		}
+	}, [Const_router, Function_clearPaymentTimers, isCartArray, isPixGenerating, isSession])
 
 	const Function_copyPix = useCallback((): void => {
 		if (!isPixCode) {
@@ -715,6 +791,35 @@ export default function Page_Carrinho(): JSX.Element {
 			setPixCopied(false)
 		}
 	}, [Function_clearPaymentTimers, Function_openLibraryAfterPayment, isPaymentStatus])
+
+	useEffect(() => {
+		const Function_handleCartCleared = (): void => {
+			Function_clearCartOnStorageAndState()
+		}
+
+		const Function_handlePaymentPaid = (Parameter_event: Event): void => {
+			const Const_customEvent = Parameter_event as CustomEvent<{ orderedUuid?: string }>
+			const Const_paidOrderedUuid = Const_customEvent.detail?.orderedUuid || ""
+			if (isOrderedUuid && Const_paidOrderedUuid && isOrderedUuid !== Const_paidOrderedUuid) {
+				return
+			}
+
+			Function_clearPaymentTimers()
+			isPaymentConfirmedRef.current = true
+			setPaymentStatus("paid")
+			setPixMessage("Pagamento concluido. Seus conteudos foram liberados.")
+			setPixCopied(false)
+			setShowCardMaintenance(false)
+		}
+
+		window.addEventListener(Const_cartClearedEventName, Function_handleCartCleared)
+		window.addEventListener(Const_paymentPaidEventName, Function_handlePaymentPaid)
+
+		return () => {
+			window.removeEventListener(Const_cartClearedEventName, Function_handleCartCleared)
+			window.removeEventListener(Const_paymentPaidEventName, Function_handlePaymentPaid)
+		}
+	}, [Function_clearCartOnStorageAndState, Function_clearPaymentTimers, isOrderedUuid])
 
 	useEffect(() => {
 		if (!isPixModalOpen || isPaymentStep !== "pix_payment" || !isOrderedUuid || isPaymentStatus === "paid") {
@@ -999,6 +1104,7 @@ export default function Page_Carrinho(): JSX.Element {
 														className="h-20 px-4 justify-between items-center bg-primary-50 border-1 border-primary-200 active:bg-primary-200"
 														variant="flat"
 														color="primary"
+														isDisabled={isPixGenerating}
 														onPress={() => {
 														Function_handlePixPayment().catch(() => {
 															setPixMessage("Não foi possível gerar o Pix agora.")
@@ -1022,7 +1128,13 @@ export default function Page_Carrinho(): JSX.Element {
 															: "h-20 items-center bg-warning-50 border-warning-200"}`}
 													variant="flat"
 													color="warning"
-													onPress={() => setShowCardMaintenance(true)}
+													isLoading={isPixGenerating}
+													isDisabled={isPixGenerating}
+													onPress={() => {
+														Function_generateCardCredit().catch(() => {
+															setPixMessage("Nao foi possivel abrir o pagamento por cartao agora.")
+														})
+													}}
 												>
 													<div className="flex items-start gap-4 w-full">
 														<div className={`p-2.5 rounded-full bg-white shadow-sm ${isShowCardMaintenance ? "text-warning-600" : "text-default-500"}`}>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Component_HeaderIdChatbotContentServer } from "@/component/(path_[id-chatbot])/layout_[id-chatbot]/ui/header_[id-chatbot]/header_[id-chatbot]_content_server"
+import { Const_paymentPaidEventName } from "@/app/payment_status_watcher_client"
 import { Type_backendStudentBibliotecaResponse } from "@/env"
 import { Card, CardBody } from "@nextui-org/react"
 import { useRouter } from "next/navigation"
@@ -199,6 +200,18 @@ export default function Layout_Painel(Parameter_content: Readonly<{ children: Re
 
 		Function_refreshLibrary().catch(() => undefined)
 	}, [isSession, Function_refreshLibrary])
+
+	useEffect(() => {
+		const Function_refreshAfterPayment = () => {
+			Function_refreshLibrary().catch(() => undefined)
+		}
+
+		window.addEventListener(Const_paymentPaidEventName, Function_refreshAfterPayment)
+
+		return () => {
+			window.removeEventListener(Const_paymentPaidEventName, Function_refreshAfterPayment)
+		}
+	}, [Function_refreshLibrary])
 
 	return (
 		<>
