@@ -1095,7 +1095,7 @@ export default function Page_Library(): JSX.Element {
 
 				{isAllContentUnlocked ? (
 					<div className="mb-4 rounded-xl border border-warning-200 bg-warning-50 p-3 text-sm text-warning-700">
-						✓ Modo de acesso especial ativado - Todos os conteúdos desbloqueados
+						✓ Todos os conteúdos desbloqueados
 					</div>
 				) : null}
 
