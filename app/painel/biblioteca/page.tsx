@@ -62,6 +62,23 @@ function Function_saveSessionOnStorage(Parameter_session: Type_panelSession): vo
 	localStorage.setItem(Const_studentSessionStorageKey, JSON.stringify(Parameter_session))
 }
 
+function Function_getCollegeArraySignature(Parameter_collegeArray: Type_backendCollege[]): string {
+	return JSON.stringify(Parameter_collegeArray.map((Parameter_single) => ([
+		Parameter_single.college_uuid,
+		Parameter_single.name_college,
+		Parameter_single.svg_college ?? null
+	])))
+}
+
+function Function_getCourseArraySignature(Parameter_courseArray: Type_backendCourse[]): string {
+	return JSON.stringify(Parameter_courseArray.map((Parameter_single) => ([
+		Parameter_single.course_uuid,
+		Parameter_single.name_course,
+		Parameter_single.college_uuid_course,
+		Parameter_single.svg_course ?? null
+	])))
+}
+
 function Function_moveSuggestionToPosition<ParameterType_item>(
 	Parameter_array: ParameterType_item[],
 	Parameter_findSuggestion: (Parameter_single: ParameterType_item) => boolean,
@@ -214,6 +231,7 @@ export default function Page_Library(): JSX.Element {
 
 	const isViewerFileUrlRef = useRef("")
 	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
+	const isCatalogRefreshBusyRef = useRef(false)
 
 	const isAllContentUnlocked = useMemo(() => isSession?.student?.isAllContentUnlocked === true, [isSession?.student?.isAllContentUnlocked])
 
@@ -398,6 +416,82 @@ export default function Page_Library(): JSX.Element {
 
 		return Const_courseArray
 	}, [Function_fetchCourseArray])
+
+	const Function_refreshCatalogSilently = useCallback(async (): Promise<void> => {
+		if (!isSession || isCatalogRefreshBusyRef.current || (isSelectionModalOpen && isSelectionModalMode === "manual")) {
+			return
+		}
+
+		try {
+			isCatalogRefreshBusyRef.current = true
+
+			const Const_collegeArray = await Function_fetchCollegeArray()
+			const Const_collegeUuidSession = isSession.student.college_uuid_student || ""
+			const Const_courseUuidSession = isSession.student.course_uuid_student || ""
+			const Const_courseArray = Const_collegeUuidSession
+				? await Function_fetchCourseArray(Const_collegeUuidSession)
+				: []
+
+			setCollegeArray((Parameter_previousCollegeArray) => (
+				Function_getCollegeArraySignature(Parameter_previousCollegeArray) === Function_getCollegeArraySignature(Const_collegeArray)
+					? Parameter_previousCollegeArray
+					: Const_collegeArray
+			))
+			setCourseArray((Parameter_previousCourseArray) => (
+				Function_getCourseArraySignature(Parameter_previousCourseArray) === Function_getCourseArraySignature(Const_courseArray)
+					? Parameter_previousCourseArray
+					: Const_courseArray
+			))
+			setCourseArrayCollegeUuid((Parameter_previousCollegeUuid) => (
+				Parameter_previousCollegeUuid === Const_collegeUuidSession
+					? Parameter_previousCollegeUuid
+					: Const_collegeUuidSession
+			))
+
+			if (isShouldPreselectBySession) {
+				setSelectedCollegeUuid(Const_collegeUuidSession)
+				setSelectedCourseUuid(
+					Const_courseArray.some((Parameter_single) => Parameter_single.course_uuid === Const_courseUuidSession)
+						? Const_courseUuidSession
+						: ""
+				)
+			}
+
+			setSession((Parameter_previousSession) => {
+				if (!Parameter_previousSession || Parameter_previousSession.student.student_uuid !== isSession.student.student_uuid) {
+					return Parameter_previousSession
+				}
+
+				const Const_hasSameCollegeArray = Function_getCollegeArraySignature(Parameter_previousSession.collegeArray) === Function_getCollegeArraySignature(Const_collegeArray)
+				const Const_hasSameCourseArray = Function_getCourseArraySignature(Parameter_previousSession.courseArray) === Function_getCourseArraySignature(Const_courseArray)
+				if (Const_hasSameCollegeArray && Const_hasSameCourseArray) {
+					return Parameter_previousSession
+				}
+
+				const Const_nextSession: Type_panelSession = {
+					...Parameter_previousSession,
+					collegeArray: Const_collegeArray,
+					courseArray: Const_courseArray
+				}
+				Function_saveSessionOnStorage(Const_nextSession)
+				return Const_nextSession
+			})
+		}
+		catch {
+			// Revalidacao silenciosa: falha de rede nao deve travar a biblioteca ja carregada.
+		}
+		finally {
+			isCatalogRefreshBusyRef.current = false
+		}
+	}, [
+		isSession,
+		isSelectionModalOpen,
+		isSelectionModalMode,
+		isShouldPreselectBySession,
+		Function_fetchCollegeArray,
+		Function_fetchCourseArray,
+		setSession
+	])
 
 	const Function_openSelectionModal = useCallback((Parameter_mode: "mandatory" | "manual") => {
 		if (!isSession) {
@@ -893,22 +987,36 @@ export default function Page_Library(): JSX.Element {
 	}, [Function_clearViewerFileUrl])
 
 	useEffect(() => {
-		if (!isSession || isNeedSuggestionFlow) {
+		if (!isSession) {
 			return
 		}
 
 		const Function_refreshOnFocus = () => {
-			Function_refreshLibrarySilently().catch(() => undefined)
-		}
-
-		const Function_refreshOnVisible = () => {
-			if (document.visibilityState === "visible") {
+			Function_refreshCatalogSilently().catch(() => undefined)
+			if (!isNeedSuggestionFlow) {
 				Function_refreshLibrarySilently().catch(() => undefined)
 			}
 		}
 
-		const Const_intervalId = setInterval(() => {
+		const Function_refreshOnVisible = () => {
+			if (document.visibilityState === "visible") {
+				Function_refreshCatalogSilently().catch(() => undefined)
+				if (!isNeedSuggestionFlow) {
+					Function_refreshLibrarySilently().catch(() => undefined)
+				}
+			}
+		}
+
+		Function_refreshCatalogSilently().catch(() => undefined)
+		if (!isNeedSuggestionFlow) {
 			Function_refreshLibrarySilently().catch(() => undefined)
+		}
+
+		const Const_intervalId = setInterval(() => {
+			Function_refreshCatalogSilently().catch(() => undefined)
+			if (!isNeedSuggestionFlow) {
+				Function_refreshLibrarySilently().catch(() => undefined)
+			}
 		}, 30000)
 
 		window.addEventListener("focus", Function_refreshOnFocus)
@@ -919,7 +1027,7 @@ export default function Page_Library(): JSX.Element {
 			window.removeEventListener("focus", Function_refreshOnFocus)
 			document.removeEventListener("visibilitychange", Function_refreshOnVisible)
 		}
-	}, [isSession, isNeedSuggestionFlow, Function_refreshLibrarySilently])
+	}, [isSession, isNeedSuggestionFlow, Function_refreshCatalogSilently, Function_refreshLibrarySilently])
 
 	if (!isSession) {
 		return (
