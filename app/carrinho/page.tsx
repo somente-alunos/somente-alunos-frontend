@@ -297,8 +297,7 @@ export default function Page_Carrinho(): JSX.Element {
 
 		const Const_txid = encodeURIComponent(Parameter_orderedUuid)
 		const Const_statusUrlArray = [
-			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/post/student/gerar-cobranca?txid=${Const_txid}`,
-			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/pagamento/feito?txid=${Const_txid}`
+			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/pagamento-feito?txid=${Const_txid}`
 		]
 
 		for (const Const_statusUrl of Const_statusUrlArray) {
