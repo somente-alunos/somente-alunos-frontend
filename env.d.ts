@@ -223,6 +223,8 @@ export type Type_backendStudentConteudoFileResponse = {
 export type Type_backendStudentPixPaymentResponse = {
     pixCopiaECola: string;
     contentUuidArray: Array<string>;
+    orderedUuid?: string;
+    payment_url?: string;
 };
 
 export type Type_backendAdminConfigWebhookEfiResponse = {

@@ -33,6 +33,12 @@ type Type_cartResponse = {
 
 type Type_cartDisplayContent = Type_backendContent
 
+type Type_paymentStatusResponse = {
+	isPaid?: boolean;
+}
+
+const Const_paymentPollIntervalMs = 2000
+
 function Function_getCartStorageKey(Parameter_studentUuid: string): string {
 	if (!Parameter_studentUuid) {
 		return ""
@@ -91,6 +97,14 @@ function Function_saveCartOnStorage(Parameter_storageKey: string, Parameter_cart
 	}))
 }
 
+function Function_clearCartStorage(Parameter_storageKey: string): void {
+	if (typeof localStorage === "undefined" || !Parameter_storageKey) {
+		return
+	}
+
+	localStorage.removeItem(Parameter_storageKey)
+}
+
 function Function_getSessionFromStorage(): Type_panelSession | null {
 	if (typeof localStorage === "undefined") {
 		return null
@@ -141,11 +155,13 @@ export default function Page_Carrinho(): JSX.Element {
 
 	const [isPixModalOpen, setPixModalOpen] = useState(false)
 	const [isPaymentStep, setPaymentStep] = useState<"method_selection" | "pix_payment">("method_selection")
+	const [isPaymentStatus, setPaymentStatus] = useState<"idle" | "waiting" | "paid" | "error">("idle")
 	const [isShowCardMaintenance, setShowCardMaintenance] = useState(false)
 	const [isPixGenerating, setPixGenerating] = useState(false)
 	const [isPixCode, setPixCode] = useState("")
 	const [isPixCopied, setPixCopied] = useState(false)
 	const [isPixMessage, setPixMessage] = useState("")
+	const [isOrderedUuid, setOrderedUuid] = useState("")
 
 	const [isViewerModalOpen, setViewerModalOpen] = useState(false)
 	const [isViewerLoading, setViewerLoading] = useState(false)
@@ -158,6 +174,9 @@ export default function Page_Carrinho(): JSX.Element {
 	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
 	const isViewerFileUrlRef = useRef("")
 	const isCartSignatureRef = useRef(Function_getCartSignature([]))
+	const isPaymentPollIntervalRef = useRef<number | null>(null)
+	const isPaymentRedirectTimeoutRef = useRef<number | null>(null)
+	const isPaymentConfirmedRef = useRef(false)
 
 	const isCartStorageKey = useMemo(() => {
 		const Const_studentUuid = isSession?.student?.student_uuid || ""
@@ -192,6 +211,7 @@ export default function Page_Carrinho(): JSX.Element {
 	}, [isViewerFileMimeType])
 
 	const isCartHasDiscount = isCartOldTotalAmount > isCartTotalAmount
+	const isPaymentCompleted = isPaymentStatus === "paid"
 
 	const isCartContentLabel = useMemo(() => {
 		if (isCartArray.length === 1) {
@@ -223,6 +243,116 @@ export default function Page_Carrinho(): JSX.Element {
 		setCartArray(Parameter_nextCartArray)
 		Function_saveCartOnStorage(isCartStorageKey, Parameter_nextCartArray)
 	}, [isCartStorageKey])
+
+	const Function_clearPaymentTimers = useCallback((): void => {
+		if (isPaymentPollIntervalRef.current !== null) {
+			window.clearInterval(isPaymentPollIntervalRef.current)
+			isPaymentPollIntervalRef.current = null
+		}
+
+		if (isPaymentRedirectTimeoutRef.current !== null) {
+			window.clearTimeout(isPaymentRedirectTimeoutRef.current)
+			isPaymentRedirectTimeoutRef.current = null
+		}
+	}, [])
+
+	const Function_clearCartOnStorageAndState = useCallback((): void => {
+		const Const_emptySignature = Function_getCartSignature([])
+		isCartSignatureRef.current = Const_emptySignature
+		setCartArray([])
+		Function_clearCartStorage(isCartStorageKey)
+	}, [isCartStorageKey])
+
+	const Function_clearBackendCart = useCallback(async (Parameter_cartArray: Type_cartDisplayContent[]): Promise<void> => {
+		if (Parameter_cartArray.length <= 0) {
+			return
+		}
+
+		await Promise.allSettled(Parameter_cartArray.map(async (Parameter_content) => {
+			try {
+				const Const_response = await fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/patch/student/carrinho`, {
+					method: "PATCH",
+					headers: { "content-type": "application/json; charset=utf-8" },
+					credentials: "include",
+					body: JSON.stringify({
+						content: { content_uuid: Parameter_content.content_uuid },
+						action: "remove"
+					})
+				})
+
+				if (!Const_response.ok) {
+					throw new Error(`Falha ao remover conteúdo do carrinho: ${Const_response.status}`)
+				}
+			}
+			catch {
+				// Mantemos a limpeza visual mesmo se uma remocao falhar no backend.
+			}
+		}))
+	}, [])
+
+	const Function_fetchPaymentStatus = useCallback(async (Parameter_orderedUuid: string): Promise<boolean | null> => {
+		if (!Parameter_orderedUuid) {
+			return null
+		}
+
+		const Const_txid = encodeURIComponent(Parameter_orderedUuid)
+		const Const_statusUrlArray = [
+			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/post/student/gerar-cobranca?txid=${Const_txid}`,
+			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/pagamento/feito?txid=${Const_txid}`
+		]
+
+		for (const Const_statusUrl of Const_statusUrlArray) {
+			try {
+				const Const_response = await fetch(Const_statusUrl, {
+					credentials: "include"
+				})
+
+				if (Const_response.status === 451) {
+					Const_router.push("/entrar")
+					return null
+				}
+
+				if (!Const_response.ok) {
+					continue
+				}
+
+				const Const_responseBody = await Const_response.json() as Type_paymentStatusResponse
+				if (typeof Const_responseBody?.isPaid === "boolean") {
+					return Const_responseBody.isPaid
+				}
+			}
+			catch {
+				// Tenta o proxmo endpoint de compatibilidade sem interromper o polling.
+			}
+		}
+
+		return false
+	}, [Const_router, Function_clearPaymentTimers])
+
+	const Function_finalizeSuccessfulPayment = useCallback(async (): Promise<void> => {
+		if (isPaymentConfirmedRef.current) {
+			return
+		}
+
+		isPaymentConfirmedRef.current = true
+		Function_clearPaymentTimers()
+		setPaymentStatus("paid")
+		setPixMessage("Pagamento concluído. Seus conteúdos foram liberados.")
+		setPixCopied(false)
+		setShowCardMaintenance(false)
+
+		const Const_paidCartArray = [...isCartArray]
+		Function_clearCartOnStorageAndState()
+		await Function_clearBackendCart(Const_paidCartArray)
+
+		isPaymentRedirectTimeoutRef.current = window.setTimeout(() => {
+			setPixModalOpen(false)
+			setPaymentStep("method_selection")
+			setPaymentStatus("idle")
+			setOrderedUuid("")
+			Const_router.push("/painel/biblioteca")
+		}, 1800)
+	}, [Const_router, Function_clearBackendCart, Function_clearCartOnStorageAndState, Function_clearPaymentTimers, isCartArray])
 
 	const Function_fetchCart = useCallback(async (Parameter_showLoading: boolean): Promise<void> => {
 		try {
@@ -472,8 +602,12 @@ export default function Page_Carrinho(): JSX.Element {
 
 		try {
 			setPixGenerating(true)
+			setPaymentStatus("waiting")
+			isPaymentConfirmedRef.current = false
 			setPixMessage("")
 			setPixCode("")
+			setOrderedUuid("")
+			Function_clearPaymentTimers()
 
 			const Const_contentUuidArray = isCartArray.map((Parameter_single) => Parameter_single.content_uuid)
 			if (Const_contentUuidArray.length <= 0) {
@@ -500,20 +634,26 @@ export default function Page_Carrinho(): JSX.Element {
 
 			const Const_responseBody = await Const_response.json() as Type_backendStudentPixPaymentResponse
 			const Const_pixCopiaECola = Const_responseBody?.pixCopiaECola || ""
+			const Const_orderedUuid = Const_responseBody?.orderedUuid || ""
 			if (!Const_pixCopiaECola) {
 				throw new Error("Pix não retornado")
 			}
+			if (!Const_orderedUuid) {
+				throw new Error("Identificador da cobrança não retornado")
+			}
 
 			setPixCode(Const_pixCopiaECola)
+			setOrderedUuid(Const_orderedUuid)
 			setPixMessage("Pix gerado com sucesso. Finalize o pagamento para liberar os conteúdos.")
 		}
 		catch {
+			setPaymentStatus("error")
 			setPixMessage("Não foi possível gerar o Pix agora. Tente novamente.")
 		}
 		finally {
 			setPixGenerating(false)
 		}
-	}, [Const_router, isCartArray, isPixGenerating])
+	}, [Const_router, Function_clearPaymentTimers, isCartArray, isPixGenerating])
 
 	const Function_copyPix = useCallback((): void => {
 		if (!isPixCode) {
@@ -527,6 +667,7 @@ export default function Page_Carrinho(): JSX.Element {
 
 	const Function_handlePixPayment = useCallback(async (): Promise<void> => {
 		setPaymentStep("pix_payment")
+		setPaymentStatus("waiting")
 		if (isPixCode || isPixGenerating) {
 			return
 		}
@@ -534,22 +675,84 @@ export default function Page_Carrinho(): JSX.Element {
 		await Function_generatePix()
 	}, [Function_generatePix, isPixCode, isPixGenerating])
 
+	const Function_openLibraryAfterPayment = useCallback((): void => {
+		Function_clearPaymentTimers()
+		setPixModalOpen(false)
+		setPaymentStep("method_selection")
+		setPaymentStatus("idle")
+		setOrderedUuid("")
+		Const_router.push("/painel/biblioteca")
+	}, [Const_router, Function_clearPaymentTimers])
+
 	const Function_openCheckoutModal = useCallback((): void => {
+		Function_clearPaymentTimers()
+		isPaymentConfirmedRef.current = false
 		setPixMessage("")
 		setPixCode("")
 		setPixCopied(false)
 		setPaymentStep("method_selection")
+		setPaymentStatus("idle")
+		setOrderedUuid("")
 		setShowCardMaintenance(false)
 		setPixModalOpen(true)
-	}, [])
+	}, [Function_clearPaymentTimers])
 
 	const Function_handlePaymentModalOpenChange = useCallback((Parameter_isOpen: boolean): void => {
 		setPixModalOpen(Parameter_isOpen)
 		if (!Parameter_isOpen) {
+			Function_clearPaymentTimers()
+			if (isPaymentStatus === "paid") {
+				Function_openLibraryAfterPayment()
+				return
+			}
+
+			isPaymentConfirmedRef.current = false
 			setPaymentStep("method_selection")
+			setPaymentStatus("idle")
+			setOrderedUuid("")
 			setShowCardMaintenance(false)
+			setPixMessage("")
+			setPixCode("")
+			setPixCopied(false)
 		}
-	}, [])
+	}, [Function_clearPaymentTimers, Function_openLibraryAfterPayment, isPaymentStatus])
+
+	useEffect(() => {
+		if (!isPixModalOpen || isPaymentStep !== "pix_payment" || !isOrderedUuid || isPaymentStatus === "paid") {
+			return
+		}
+
+		let isCancelled = false
+
+		const Function_checkPaymentStatus = async (): Promise<void> => {
+			if (isCancelled || isPaymentConfirmedRef.current) {
+				return
+			}
+
+			const Const_isPaid = await Function_fetchPaymentStatus(isOrderedUuid)
+			if (isCancelled || isPaymentConfirmedRef.current) {
+				return
+			}
+
+			if (Const_isPaid) {
+				await Function_finalizeSuccessfulPayment()
+			}
+		}
+
+		Function_checkPaymentStatus().catch(() => undefined)
+		const Const_intervalId = window.setInterval(() => {
+			Function_checkPaymentStatus().catch(() => undefined)
+		}, Const_paymentPollIntervalMs)
+		isPaymentPollIntervalRef.current = Const_intervalId
+
+		return () => {
+			isCancelled = true
+			window.clearInterval(Const_intervalId)
+			if (isPaymentPollIntervalRef.current === Const_intervalId) {
+				isPaymentPollIntervalRef.current = null
+			}
+		}
+	}, [Function_fetchPaymentStatus, Function_finalizeSuccessfulPayment, isOrderedUuid, isPaymentStatus, isPixModalOpen, isPaymentStep])
 
 	if (!isSession || isPageLoading) {
 		return (
@@ -861,7 +1064,24 @@ export default function Page_Carrinho(): JSX.Element {
 									</ModalHeader>
 									<ModalBody className="pt-6 md:py-10 flex flex-col justify-center">
 										<div className="flex flex-col items-center gap-6 justify-center h-full">
-											{isPixGenerating ? (
+											{isPaymentCompleted ? (
+												<div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
+													<div className="flex h-18 w-18 items-center justify-center rounded-full bg-success-100 text-success-600 shadow-sm">
+														<CheckCircle2 size={36} />
+													</div>
+													<div className="flex flex-col gap-2">
+														<h3 className="text-2xl font-bold text-success-700">
+															Pagamento concluído
+														</h3>
+														<p className="max-w-[340px] text-sm text-default-600">
+															Seus conteúdos foram liberados, o carrinho foi limpo e a biblioteca será atualizada.
+														</p>
+													</div>
+													<div className="rounded-2xl border border-success-200 bg-success-50 px-4 py-3 text-sm font-semibold text-success-700">
+														Atualizando sua biblioteca agora
+													</div>
+												</div>
+											) : isPixGenerating ? (
 												<div className="flex flex-col items-center justify-center py-10 gap-4">
 													<Spinner size="lg" color="primary" />
 													<p className="text-sm text-default-500 font-medium animate-pulse">
@@ -919,13 +1139,13 @@ export default function Page_Carrinho(): JSX.Element {
 							)}
 							<ModalFooter className="pt-2 pb-6 md:pb-10">
 								<Button
-									color="danger"
+									color={isPaymentCompleted ? "success" : "danger"}
 									variant="flat"
-									onPress={onClosePayment}
-									className="h-12 font-medium bg-danger-50 text-danger hover:bg-danger-100 hover:text-danger-600 transition-colors"
+									onPress={isPaymentCompleted ? Function_openLibraryAfterPayment : onClosePayment}
+									className={`h-12 font-medium transition-colors ${isPaymentCompleted ? "bg-success-50 text-success hover:bg-success-100 hover:text-success-700" : "bg-danger-50 text-danger hover:bg-danger-100 hover:text-danger-600"}`}
 									fullWidth
 								>
-									Cancelar Compra
+									{isPaymentCompleted ? "Ir para Biblioteca" : "Cancelar Compra"}
 								</Button>
 							</ModalFooter>
 						</>
