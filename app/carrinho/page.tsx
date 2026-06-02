@@ -1118,7 +1118,7 @@ export default function Page_Carrinho(): JSX.Element {
 											</div>
 										</div>
 
-											<div className="flex flex-col gap-3">
+											<div className="flex flex-col gap-5">
 													<Button
 														className="h-20 px-4 justify-between items-center bg-primary-50 border-1 border-primary-200 active:bg-primary-200"
 														variant="flat"
@@ -1135,7 +1135,7 @@ export default function Page_Carrinho(): JSX.Element {
 														<QrCode size={24} />
 													</div>
 													<div className="flex flex-col items-start gap-0.5">
-														<span className="text-lg font-bold text-primary-900">Pix (Instantâneo)</span>
+														<span className="text-lg font-bold text-primary-900">Pix</span>
 														<span className="text-xs font-medium text-primary-600">Liberação imediata</span>
 													</div>
 												</div>
@@ -1160,7 +1160,7 @@ export default function Page_Carrinho(): JSX.Element {
 															<CreditCard size={24} />
 														</div>
 															<div className="min-w-0 flex flex-col items-start gap-0.5 text-left whitespace-normal">
-															<span className={`text-lg font-bold ${isShowCardMaintenance ? "text-primary-800" : "text-default-700"}`}>
+															<span className={`text-lg font-bold ${isShowCardMaintenance ? "text-primary-900" : "text-default-700"}`}>
 																Cartão de Crédito
 															</span>
 															{isShowCardMaintenance ? (
@@ -1174,7 +1174,7 @@ export default function Page_Carrinho(): JSX.Element {
 																	</p>
 																</>
 															) : (
-																<span className="text-xs font-medium text-default-500">
+																<span className="text-xs font-medium text-primary-600">
 																	Até 6x sem juros
 																</span>
 															)}
@@ -1265,9 +1265,6 @@ export default function Page_Carrinho(): JSX.Element {
 								</>
 							)}
 							<ModalFooter className="pt-2 pb-6 md:pb-10">
-								<div className="rounded-2xl border border-success-200 bg-success-50 px-4 py-3 text-sm font-semibold text-success-700">
-									Atualizando sua biblioteca agora
-								</div>
 								<Button
 									color={isPaymentCompleted ? "success" : "danger"}
 									variant="flat"
