@@ -656,12 +656,26 @@ export default function Page_Library(): JSX.Element {
 			// Tenta extrair filename do header Content-Disposition (lógica antiga)
 			let filename = 'download.pdf'
 			try {
-				const cd = res.headers.get('Content-Disposition') || res.headers.get('content-disposition')
+				const cd = res.headers.get('Content-Disposition') || res.headers.get('content-disposition');
 				if (cd) {
-					const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/) // suporta filename* and filename
+					const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/); // suporta filename* and filename
 					if (match && match[1]) {
-						filename = decodeURIComponent(match[1])
-						console.log('Decoded filename:', filename)
+						let filename = decodeURIComponent(match[1]);
+
+						// Limpeza e formatação do nome do arquivo
+						filename = filename
+							// 1. Remove possíveis acentos (ex: á vira a, ç vira c)
+							.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+							// 2. Opcional: remove o 'Â' que costuma ser um erro de encode de caracteres como 'ª' ou 'º'
+							.replace(/Â/g, '')
+							// 3. Substitui TUDO que não for letra, número, ponto ou underscore por hífen (mata espaços, ª, etc)
+							.replace(/[^a-zA-Z0-9_.]/g, '-')
+							// 4. Substitui múltiplos hífens seguidos por um só (ex: " - " vira "---" que vira "-")
+							.replace(/-+/g, '-')
+							// 5. Garante que não fique um hífen grudado no ponto da extensão (ex: arquivo-.pdf -> arquivo.pdf)
+							.replace(/-\./g, '.');
+
+						console.log('Decoded filename:', filename);
 					}
 				}
 			} catch (e) {

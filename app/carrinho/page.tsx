@@ -1135,18 +1135,18 @@ export default function Page_Carrinho(): JSX.Element {
 														<QrCode size={24} />
 													</div>
 													<div className="flex flex-col items-start gap-0.5">
-														<span className="text-lg font-bold text-primary-900">Pix (Instantaneo)</span>
-														<span className="text-xs font-medium text-primary-600">Liberacao imediata</span>
+														<span className="text-lg font-bold text-primary-900">Pix (Instantâneo)</span>
+														<span className="text-xs font-medium text-primary-600">Liberação imediata</span>
 													</div>
 												</div>
 											</Button>
 
 													<Button
-														className={`px-4 border-1 justify-start active:bg-warning-200 whitespace-normal [&>span]:!whitespace-normal [&>span]:w-full [&>span]:!items-start ${isShowCardMaintenance
-															? "h-[164px] items-start py-4 bg-warning-50 border-warning-200"
-															: "h-20 items-center bg-warning-50 border-warning-200"}`}
+														className={`px-4 border-1 justify-start active:bg-primary-200 whitespace-normal [&>span]:!whitespace-normal [&>span]:w-full [&>span]:!items-start ${isShowCardMaintenance
+															? "h-[164px] items-start py-4 bg-primary-50 border-primary-200"
+															: "h-20 items-center bg-primary-50 border-primary-200"}`}
 													variant="flat"
-													color="warning"
+													color="primary"
 													isLoading={isPixGenerating}
 													isDisabled={isPixGenerating}
 													onPress={() => {
@@ -1156,26 +1156,26 @@ export default function Page_Carrinho(): JSX.Element {
 													}}
 												>
 													<div className="flex items-start gap-4 w-full">
-														<div className={`p-2.5 rounded-full bg-white shadow-sm ${isShowCardMaintenance ? "text-warning-600" : "text-default-500"}`}>
+														<div className={`p-2.5 rounded-full bg-white shadow-sm ${isShowCardMaintenance ? "text-primary-600" : "text-default-500"}`}>
 															<CreditCard size={24} />
 														</div>
 															<div className="min-w-0 flex flex-col items-start gap-0.5 text-left whitespace-normal">
-															<span className={`text-lg font-bold ${isShowCardMaintenance ? "text-warning-800" : "text-default-700"}`}>
-																Cartao de Credito
+															<span className={`text-lg font-bold ${isShowCardMaintenance ? "text-primary-800" : "text-default-700"}`}>
+																Cartão de Crédito
 															</span>
 															{isShowCardMaintenance ? (
 																<>
-																	<span className="text-sm font-semibold text-warning-800">
-																		Opcao em manutencao
+																	<span className="text-sm font-semibold text-primary-800">
+																		Opcão em manutenção
 																	</span>
-																		<p className="text-xs text-warning-700 leading-relaxed whitespace-normal break-words">
-																		Notamos falhas no pagamento por cartao e pausamos essa opcao por enquanto.
-																		Use o <span className="font-bold">Pix</span> ate resolvermos. Obrigado pela compreensao!
+																		<p className="text-xs text-primary-700 leading-relaxed whitespace-normal break-words">
+																		Notamos falhas no pagamento por cartão e pausamos essa opção por enquanto.
+																		Use o <span className="font-bold">Pix</span> até resolvermos. Obrigado pela compreensão!
 																	</p>
 																</>
 															) : (
 																<span className="text-xs font-medium text-default-500">
-																	Ate 6x sem juros
+																	Até 6x sem juros
 																</span>
 															)}
 														</div>
@@ -1204,11 +1204,8 @@ export default function Page_Carrinho(): JSX.Element {
 															Pagamento concluído
 														</h3>
 														<p className="max-w-[340px] text-sm text-default-600">
-															Seus conteúdos foram liberados, o carrinho foi limpo e a biblioteca será atualizada.
+															Seus conteúdos foram liberados, o carrinho foi limpo e a biblioteca atualizada.
 														</p>
-													</div>
-													<div className="rounded-2xl border border-success-200 bg-success-50 px-4 py-3 text-sm font-semibold text-success-700">
-														Atualizando sua biblioteca agora
 													</div>
 												</div>
 											) : isPixGenerating ? (
@@ -1268,11 +1265,14 @@ export default function Page_Carrinho(): JSX.Element {
 								</>
 							)}
 							<ModalFooter className="pt-2 pb-6 md:pb-10">
+								<div className="rounded-2xl border border-success-200 bg-success-50 px-4 py-3 text-sm font-semibold text-success-700">
+									Atualizando sua biblioteca agora
+								</div>
 								<Button
 									color={isPaymentCompleted ? "success" : "danger"}
 									variant="flat"
 									onPress={isPaymentCompleted ? Function_openLibraryAfterPayment : onClosePayment}
-									className={`h-12 font-medium transition-colors ${isPaymentCompleted ? "bg-success-50 text-success hover:bg-success-100 hover:text-success-700" : "bg-danger-50 text-danger hover:bg-danger-100 hover:text-danger-600"}`}
+									className={`h-12 font-medium transition-colors ${isPaymentCompleted ? "border-success-200 bg-success-50 text-success-700 active:bg-success-100" : "bg-danger-50 text-danger active:bg-danger-100 active:text-danger-600"}`}
 									fullWidth
 								>
 									{isPaymentCompleted ? "Ir para Biblioteca" : "Cancelar Compra"}
