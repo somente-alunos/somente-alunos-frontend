@@ -477,7 +477,7 @@ export default function Page_Library(): JSX.Element {
 		setViewerError("")
 
 		const Const_response = await fetch(
-			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteúdo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`,
+			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`,
 			{ credentials: "include" }
 		)
 		if (!Const_response.ok) {
