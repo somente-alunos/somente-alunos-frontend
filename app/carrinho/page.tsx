@@ -1173,7 +1173,7 @@ export default function Page_Carrinho(): JSX.Element {
 																</>
 															) : (
 																<span className="text-xs font-medium text-primary-600">
-																	Até 6x sem juros
+																	Liberação imediata
 																</span>
 															)}
 														</div>
