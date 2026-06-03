@@ -196,6 +196,31 @@ function Function_getContentUpdateMs(Parameter_content: Type_libraryDisplayConte
 	return Number.isNaN(Const_updateMs) ? 0 : Const_updateMs
 }
 
+function Function_isContentUpdateInFutureDay(
+	Parameter_content: Type_libraryDisplayContent,
+	Parameter_nowMs: number
+): boolean {
+	const Const_updateMs = Function_getContentUpdateMs(Parameter_content)
+	if (Const_updateMs <= 0) {
+		return false
+	}
+
+	const Const_updateDate = new Date(Const_updateMs)
+	const Const_nowDate = new Date(Parameter_nowMs)
+	const Const_updateDayMs = new Date(
+		Const_updateDate.getFullYear(),
+		Const_updateDate.getMonth(),
+		Const_updateDate.getDate()
+	).getTime()
+	const Const_nowDayMs = new Date(
+		Const_nowDate.getFullYear(),
+		Const_nowDate.getMonth(),
+		Const_nowDate.getDate()
+	).getTime()
+
+	return Const_updateDayMs > Const_nowDayMs
+}
+
 function Function_hasOldPriceContent(Parameter_content: Type_libraryDisplayContent): boolean {
 	return (
 		typeof Parameter_content.old_price_content === "number" &&
@@ -232,8 +257,8 @@ function Function_sortLibrarySectionContentArray(
 	return [...Parameter_contentArray].sort((Parameter_previous, Parameter_next) => {
 		const Const_previousUpdateMs = Function_getContentUpdateMs(Parameter_previous)
 		const Const_nextUpdateMs = Function_getContentUpdateMs(Parameter_next)
-		const Const_previousIsFuture = Const_previousUpdateMs > Const_nowMs
-		const Const_nextIsFuture = Const_nextUpdateMs > Const_nowMs
+		const Const_previousIsFuture = Function_isContentUpdateInFutureDay(Parameter_previous, Const_nowMs)
+		const Const_nextIsFuture = Function_isContentUpdateInFutureDay(Parameter_next, Const_nowMs)
 
 		if (Const_previousIsFuture !== Const_nextIsFuture) {
 			return Const_previousIsFuture ? 1 : -1
@@ -377,11 +402,16 @@ export default function Page_Library(): JSX.Element {
 	const isLibraryGroupedContent = useMemo(() => {
 		const Const_featuredArray: Type_libraryDisplayContent[] = []
 		const Const_oldArray: Type_libraryDisplayContent[] = []
-		const Const_featuredThresholdMs = Date.now() - Const_featuredTimeWindowMs
+		const Const_nowMs = Date.now()
+		const Const_featuredThresholdMs = Const_nowMs - Const_featuredTimeWindowMs
 
 		for (const Let_contentSingle of isLibraryContentDisplayArray) {
 			const Const_updateMs = Function_getContentUpdateMs(Let_contentSingle)
-			if (Const_updateMs > 0 && Const_updateMs >= Const_featuredThresholdMs) {
+			if (
+				Const_updateMs > 0 &&
+				Const_updateMs >= Const_featuredThresholdMs &&
+				!Function_isContentUpdateInFutureDay(Let_contentSingle, Const_nowMs)
+			) {
 				Const_featuredArray.push(Let_contentSingle)
 			}
 			else {
