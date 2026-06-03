@@ -165,7 +165,7 @@ function Function_getAvailabilityLabel(
 	}
 
 	const Const_hoursLeft = Math.max(1, Math.ceil(Const_diffMs / (1000 * 60 * 60)))
-	return `Previsão, até ${Const_hoursLeft} horas`
+	return `Previsão, até ${Const_hoursLeft} horas (${new Date(Parameter_content.prevision_iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })})`
 }
 
 function Function_getContentUpdateMs(Parameter_content: Type_libraryDisplayContent): number {
