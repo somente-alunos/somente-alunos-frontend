@@ -1106,9 +1106,9 @@ export default function Page_Library(): JSX.Element {
 			>
 				<div className="flex items-start gap-2">
 					{/* <FileText size={20} className="mt-[1px] text-default-600" /> */}
-					<div className="text-base font-semibold text-default-900">{Let_contentSingle.name_content}</div>
+					<div className="text-base font-semibold text-default-900 leading-[1.15rem]">{Let_contentSingle.name_content}</div>
 				</div>
-				<div className="text-sm text-default-600">
+				<div className="text-sm text-default-600 mt-[3px]">
 					Compartilhado por {Function_getStudentAlias(Let_contentSingle.owner_student_uuid)}
 				</div>
 
