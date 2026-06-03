@@ -1217,30 +1217,33 @@ export default function Page_Library(): JSX.Element {
 							: "Não verificado"}
 					</span>
 
-					{Const_isNonAcquiredAvailable && Let_contentSingle.old_price_content > 0 &&
-					Let_contentSingle.old_price_content !== Let_contentSingle.current_price_content ? (
-							<span className="inline-flex min-h-8 items-center rounded-full bg-default-100 px-3 text-sm text-default-500 line-through">
-								{Function_formatCurrencyBRL(Let_contentSingle.old_price_content)}
-							</span>
-						) : null}
-
-					{Const_isNonAcquiredAvailable ? (
-						<span className="inline-flex min-h-8 items-center rounded-full bg-success-100 px-3 text-sm font-semibold text-success-700">
-							{Function_formatCurrencyBRL(Let_contentSingle.current_price_content)}
-						</span>
-					) : null}
-
 					{Const_isUnavailable ? (
 						<span className="inline-flex min-h-8 items-center rounded-full bg-warning-100 px-3 text-sm font-medium text-warning-700">
 							{Const_availabilityLabel}
 						</span>
 					) : null}
 				</div> */}
-				{Const_isUnavailable ? (
-					<span className="mt-3 inline-flex min-h-8 items-center rounded-full bg-warning-100 px-3 text-sm font-medium text-warning-700">
-						{Const_availabilityLabel}
-					</span>
-				) : null}
+
+				<div className="mt-3 flex flex-wrap items-center gap-2">
+					{Const_isUnavailable ? (
+						<span className="inline-flex min-h-8 items-center rounded-full bg-warning-100 px-3 text-sm font-medium text-warning-700">
+							{Const_availabilityLabel}
+						</span>
+					) : null}
+
+					{Const_isUnavailable && Let_contentSingle.old_price_content &&
+					Let_contentSingle.old_price_content !== Let_contentSingle.current_price_content ? (
+						<span className="inline-flex min-h-8 items-center rounded-full bg-default-100 px-3 text-sm text-default-500 line-through">
+							{Function_formatCurrencyBRL(Let_contentSingle.old_price_content)}
+						</span>
+					) : null}
+
+					{Const_isUnavailable && Let_contentSingle.current_price_content ? (
+						<span className="inline-flex min-h-8 items-center rounded-full bg-success-100 px-3 text-sm font-semibold text-success-700">
+							{Function_formatCurrencyBRL(Let_contentSingle.current_price_content)}
+						</span>
+					) : null}
+				</div>
 
 				{Const_isNonAcquiredAvailable ? (
 					<div className="mt-3.5 flex flex-wrap gap-2 items-baseline">
