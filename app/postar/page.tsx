@@ -58,21 +58,21 @@ function Function_formatCurrencyBRL(Parameter_value: number): string {
 
 function Function_getPostedAvailabilityLabel(Parameter_content: Type_backendContent, Parameter_nowMs: number): string {
 	if (!Parameter_content.prevision_content) {
-		return "Disponivel em breve"
+		return "Disponível em breve"
 	}
 
 	const Const_previsionMs = new Date(Parameter_content.prevision_content).getTime()
 	if (Number.isNaN(Const_previsionMs)) {
-		return "Disponivel em breve"
+		return "Disponível em breve"
 	}
 
 	const Const_diffMs = Const_previsionMs - Parameter_nowMs
 	if (Const_diffMs <= 0) {
-		return "Disponivel em breve"
+		return "Disponível em breve"
 	}
 
 	const Const_hoursLeft = Math.max(1, Math.ceil(Const_diffMs / (1000 * 60 * 60)))
-	return `Disponivel em ${Const_hoursLeft} horas`
+	return `Disponível em ${Const_hoursLeft} horas`
 }
 
 export default function Page_Postar(): JSX.Element {

@@ -150,22 +150,22 @@ function Function_getAvailabilityLabel(
 	Parameter_nowMs: number
 ): string {
 	if (!Parameter_content.prevision_iso) {
-		return "Disponivel em breve"
+		return "Disponível em breve"
 	}
 
 	const Const_previsionMs = new Date(Parameter_content.prevision_iso).getTime()
 	const Const_isInvalidDate = Number.isNaN(Const_previsionMs)
 	if (Const_isInvalidDate) {
-		return "Disponivel em breve"
+		return "Disponível em breve"
 	}
 
 	const Const_diffMs = Const_previsionMs - Parameter_nowMs
 	if (Const_diffMs <= 0) {
-		return "Disponivel em breve"
+		return "Disponível em breve"
 	}
 
 	const Const_hoursLeft = Math.max(1, Math.ceil(Const_diffMs / (1000 * 60 * 60)))
-	return `Disponivel em ${Const_hoursLeft} horas`
+	return `Previsão, em até ${Const_hoursLeft} horas`
 }
 
 function Function_getContentUpdateMs(Parameter_content: Type_libraryDisplayContent): number {
@@ -1142,6 +1142,11 @@ export default function Page_Library(): JSX.Element {
 						</span>
 					) : null}
 				</div> */}
+				{Const_isUnavailable ? (
+					<span className="inline-flex min-h-8 items-center rounded-full bg-warning-100 px-3 text-sm font-medium text-warning-700">
+						{Const_availabilityLabel}
+					</span>
+				) : null}
 
 				{Const_isNonAcquiredAvailable ? (
 					<div className="mt-3.5 flex flex-wrap gap-2 items-baseline">
@@ -1218,7 +1223,7 @@ export default function Page_Library(): JSX.Element {
 							startContent={<Clock3 size={18} />}
 							isDisabled
 						>
-							Disponivel em breve
+							Disponível em breve
 						</Button>
 					)}
 				</div>
@@ -1381,7 +1386,7 @@ export default function Page_Library(): JSX.Element {
 								<LibraryBig size={22} />
 							</div>
 							<p className="text-sm sm:text-base font-medium text-default-700">
-								Nenhum conteúdo disponivel no momento
+								Nenhum conteúdo disponível no momento
 							</p>
 						</div>
 					) : (
@@ -1413,7 +1418,7 @@ export default function Page_Library(): JSX.Element {
 									</CardBody>
 									<CardFooter className="pt-0 flex items-center justify-between">
 										<span className={`text-xs font-semibold ${Let_contentSingle.isAcquiredContent ? "text-success" : "text-warning-700"}`}>
-											{Let_contentSingle.isAcquiredContent ? "Conteúdo adquirido" : "Previa disponivel"}
+											{Let_contentSingle.isAcquiredContent ? "Conteúdo adquirido" : "Prévia disponível"}
 										</span>
 										<Button
 											size="sm"
