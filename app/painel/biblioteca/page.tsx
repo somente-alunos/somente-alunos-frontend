@@ -1143,7 +1143,7 @@ export default function Page_Library(): JSX.Element {
 					) : null}
 				</div> */}
 				{Const_isUnavailable ? (
-					<span className="inline-flex min-h-8 items-center rounded-full bg-warning-100 px-3 text-sm font-medium text-warning-700">
+					<span className="mt-3 inline-flex min-h-8 items-center rounded-full bg-warning-100 px-3 text-sm font-medium text-warning-700">
 						{Const_availabilityLabel}
 					</span>
 				) : null}
@@ -1163,7 +1163,7 @@ export default function Page_Library(): JSX.Element {
 					</div>
 				) : null}
 
-				<div className="mt-6 flex flex-wrap gap-2">
+				<div className={`flex flex-wrap gap-2` + (!Const_canOpenPreview && !Const_canOpenFull ? " mt-4" : " mt-6")}>
 					{Const_canOpenPreview ? (
 						<>
 							<Button
