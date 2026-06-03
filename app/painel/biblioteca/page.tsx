@@ -169,12 +169,31 @@ function Function_getAvailabilityLabel(
 }
 
 function Function_getContentUpdateMs(Parameter_content: Type_libraryDisplayContent): number {
-	const Const_updateMs = new Date(Parameter_content.content_update).getTime()
-	if (Number.isNaN(Const_updateMs)) {
-		return 0
+	const Const_updateValue = Parameter_content.content_update.trim()
+	const Const_sqlDateMatch = Const_updateValue.match(/^(\d{4,})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/)
+	if (Const_sqlDateMatch) {
+		const [
+			,
+			Const_year,
+			Const_month,
+			Const_day,
+			Const_hour,
+			Const_minute,
+			Const_second
+		] = Const_sqlDateMatch
+		const Const_updateMs = new Date(
+			Number(Const_year),
+			Number(Const_month) - 1,
+			Number(Const_day),
+			Number(Const_hour),
+			Number(Const_minute),
+			Number(Const_second)
+		).getTime()
+		return Number.isNaN(Const_updateMs) ? 0 : Const_updateMs
 	}
 
-	return Const_updateMs
+	const Const_updateMs = new Date(Const_updateValue).getTime()
+	return Number.isNaN(Const_updateMs) ? 0 : Const_updateMs
 }
 
 function Function_hasOldPriceContent(Parameter_content: Type_libraryDisplayContent): boolean {
@@ -185,7 +204,15 @@ function Function_hasOldPriceContent(Parameter_content: Type_libraryDisplayConte
 	)
 }
 
+function Function_isPrevisionContent(Parameter_content: Type_libraryDisplayContent): boolean {
+	return !Parameter_content.is_available_now
+}
+
 function Function_getLibraryContentPriority(Parameter_content: Type_libraryDisplayContent): number {
+	if (Function_isPrevisionContent(Parameter_content)) {
+		return 3
+	}
+
 	if (Parameter_content.is_acquired_content) {
 		return 0
 	}
@@ -210,6 +237,10 @@ function Function_sortLibrarySectionContentArray(
 
 		if (Const_previousIsFuture !== Const_nextIsFuture) {
 			return Const_previousIsFuture ? 1 : -1
+		}
+
+		if (Const_previousIsFuture && Const_nextIsFuture) {
+			return Const_nextUpdateMs - Const_previousUpdateMs
 		}
 
 		const Const_previousPriority = Function_getLibraryContentPriority(Parameter_previous)
