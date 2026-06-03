@@ -1142,9 +1142,7 @@ export default function Page_Carrinho(): JSX.Element {
 											</Button>
 
 													<Button
-														className={`px-4 border-1 justify-start active:bg-primary-200 whitespace-normal [&>span]:!whitespace-normal [&>span]:w-full [&>span]:!items-start ${isShowCardMaintenance
-															? "h-[164px] items-start py-4 bg-primary-50 border-primary-200"
-															: "h-20 items-center bg-primary-50 border-primary-200"}`}
+														className="h-20 px-4 justify-between items-center bg-primary-50 border-1 border-primary-200 active:bg-primary-200"
 													variant="flat"
 													color="primary"
 													isLoading={isPixGenerating}
@@ -1155,12 +1153,12 @@ export default function Page_Carrinho(): JSX.Element {
 														})
 													}}
 												>
-													<div className="flex items-start gap-4 w-full">
-														<div className={`p-2.5 rounded-full bg-white shadow-sm ${isShowCardMaintenance ? "text-primary-600" : "text-default-500"}`}>
+													<div className="flex items-center gap-4">
+														<div className="p-2.5 rounded-full bg-white text-primary shadow-sm">
 															<CreditCard size={24} />
 														</div>
-															<div className="min-w-0 flex flex-col items-start gap-0.5 text-left whitespace-normal">
-															<span className={`text-lg font-bold ${isShowCardMaintenance ? "text-primary-900" : "text-default-700"}`}>
+															<div className="flex flex-col items-start gap-0.5">
+															<span className="text-lg font-bold text-primary-900">
 																Cartão de Crédito
 															</span>
 															{isShowCardMaintenance ? (
