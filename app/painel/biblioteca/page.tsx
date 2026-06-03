@@ -1297,39 +1297,51 @@ export default function Page_Library(): JSX.Element {
 				) : null}
 
 				<div className="space-y-7">
-					<div className="px-1">
-						<div className="relative flex items-center justify-center">
-							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
-							<span className="mx-3 rounded-full border border-default-300 bg-default-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-default-600">
-								Conteúdos em destaque
-							</span>
-							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
+					{isLibraryGroupedContent.featured.length <= 0 ? (
+						<></>
+					) : (
+						<div className="px-1">
+							<div className="relative flex items-center justify-center">
+								<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
+								<span className="mx-3 rounded-full border border-default-300 bg-default-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-default-600">
+									Conteúdos em destaque
+								</span>
+								<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
+							</div>
 						</div>
-					</div>
+					)}
 
-					<section>
-						{/* <div className="mb-3">
-							<h2 className="inline-flex items-center gap-2 rounded-full bg-warning-100 px-3 py-1 text-base font-semibold text-warning-700">
-								<span>Em destaque</span>
-								<Trophy size={18} className="text-warning-700" />
-							</h2>
-						</div> */}
-						{isLibraryGroupedContent.featured.length <= 0 ? (
-							<div className="rounded-xl border border-default-200 bg-default-50 p-4 text-sm text-default-600">
-								{"Sem conte\u00FAdo em destaque"}
-							</div>
-						) : (
-							<div className="grid grid-cols-1 gap-5">
-								{isLibraryGroupedContent.featured.map(Function_renderLibraryContentCard)}
-							</div>
-						)}
-					</section>
+					{isLibraryGroupedContent.featured.length <= 0 ? (
+						<></>
+					) : (
+						<section>
+							{/* <div className="mb-3">
+								<h2 className="inline-flex items-center gap-2 rounded-full bg-warning-100 px-3 py-1 text-base font-semibold text-warning-700">
+									<span>Em destaque</span>
+									<Trophy size={18} className="text-warning-700" />
+								</h2>
+							</div> */}
+							{isLibraryGroupedContent.featured.length <= 0 ? (
+								<div className="rounded-xl border border-default-200 bg-default-50 p-4 text-sm text-default-600">
+									{"Sem conte\u00FAdo em destaque"}
+								</div>
+							) : (
+								<div className="grid grid-cols-1 gap-5">
+									{isLibraryGroupedContent.featured.map(Function_renderLibraryContentCard)}
+								</div>
+							)}
+						</section>
+					)}
 
 					<div className="px-1">
 						<div className="relative flex items-center justify-center">
 							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 							<span className="mx-3 rounded-full border border-default-300 bg-default-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-default-600">
-								Conteúdos antigos
+								{isLibraryGroupedContent.featured.length <= 0 ? (
+									"Conteúdos disponíveis"
+								) : (
+									"Conteúdos antigos"
+								)}
 							</span>
 							<div className="h-px flex-1 bg-gradient-to-r from-transparent via-default-300 to-transparent" />
 						</div>
@@ -1357,7 +1369,7 @@ export default function Page_Library(): JSX.Element {
 												})
 											}}
 										>
-											Mostrar mais {Math.min(Const_oldContentLoadMoreStep, isLibraryGroupedContent.old.length - isOldContentVisibleCount)}
+											Mostrar mais {/* {Math.min(Const_oldContentLoadMoreStep, isLibraryGroupedContent.old.length - isOldContentVisibleCount)} */}
 										</Button>
 									</div>
 								) : null}
