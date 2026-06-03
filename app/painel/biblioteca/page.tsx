@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 
 const Const_studentSessionStorageKey = "somente_alunos_student_session_v1"
-const Const_featuredTimeWindowMs = 36 * 60 * 60 * 1000
+const Const_featuredTimeWindowMs = 3 * 24 * 60 * 60 * 1000
 const Const_oldContentInitialVisibleCount = 5
 const Const_oldContentLoadMoreStep = 3
 
@@ -177,19 +177,52 @@ function Function_getContentUpdateMs(Parameter_content: Type_libraryDisplayConte
 	return Const_updateMs
 }
 
+function Function_hasOldPriceContent(Parameter_content: Type_libraryDisplayContent): boolean {
+	return (
+		typeof Parameter_content.old_price_content === "number" &&
+		Parameter_content.old_price_content > 0 &&
+		Parameter_content.old_price_content !== Parameter_content.current_price_content
+	)
+}
+
+function Function_getLibraryContentPriority(Parameter_content: Type_libraryDisplayContent): number {
+	if (Parameter_content.is_acquired_content) {
+		return 0
+	}
+
+	if (Function_hasOldPriceContent(Parameter_content)) {
+		return 1
+	}
+
+	return 2
+}
+
 function Function_sortLibrarySectionContentArray(
 	Parameter_contentArray: Type_libraryDisplayContent[]
 ): Type_libraryDisplayContent[] {
+	const Const_nowMs = Date.now()
+
 	return [...Parameter_contentArray].sort((Parameter_previous, Parameter_next) => {
-		if (Parameter_previous.is_acquired_content !== Parameter_next.is_acquired_content) {
-			return Parameter_previous.is_acquired_content ? -1 : 1
+		const Const_previousUpdateMs = Function_getContentUpdateMs(Parameter_previous)
+		const Const_nextUpdateMs = Function_getContentUpdateMs(Parameter_next)
+		const Const_previousIsFuture = Const_previousUpdateMs > Const_nowMs
+		const Const_nextIsFuture = Const_nextUpdateMs > Const_nowMs
+
+		if (Const_previousIsFuture !== Const_nextIsFuture) {
+			return Const_previousIsFuture ? 1 : -1
 		}
 
-		if (Parameter_previous.verified_content !== Parameter_next.verified_content) {
-			return Parameter_next.verified_content - Parameter_previous.verified_content
+		const Const_previousPriority = Function_getLibraryContentPriority(Parameter_previous)
+		const Const_nextPriority = Function_getLibraryContentPriority(Parameter_next)
+		if (Const_previousPriority !== Const_nextPriority) {
+			return Const_previousPriority - Const_nextPriority
 		}
 
-		return Function_getContentUpdateMs(Parameter_next) - Function_getContentUpdateMs(Parameter_previous)
+		if (Const_previousUpdateMs !== Const_nextUpdateMs) {
+			return Const_nextUpdateMs - Const_previousUpdateMs
+		}
+
+		return Parameter_next.verified_content - Parameter_previous.verified_content
 	})
 }
 
