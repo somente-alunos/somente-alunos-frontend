@@ -249,7 +249,7 @@ function Function_getLibraryContentPriority(Parameter_content: Type_libraryDispl
 	return 2
 }
 
-function Function_sortLibrarySectionContentArray(
+function Function_sortLibraryFeaturedContentArray(
 	Parameter_contentArray: Type_libraryDisplayContent[]
 ): Type_libraryDisplayContent[] {
 	const Const_nowMs = Date.now()
@@ -279,6 +279,14 @@ function Function_sortLibrarySectionContentArray(
 		}
 
 		return Parameter_next.verified_content - Parameter_previous.verified_content
+	})
+}
+
+function Function_sortLibraryOldContentArray(
+	Parameter_contentArray: Type_libraryDisplayContent[]
+): Type_libraryDisplayContent[] {
+	return [...Parameter_contentArray].sort((Parameter_previous, Parameter_next) => {
+		return Function_getContentUpdateMs(Parameter_next) - Function_getContentUpdateMs(Parameter_previous)
 	})
 }
 
@@ -407,11 +415,7 @@ export default function Page_Library(): JSX.Element {
 
 		for (const Let_contentSingle of isLibraryContentDisplayArray) {
 			const Const_updateMs = Function_getContentUpdateMs(Let_contentSingle)
-			if (
-				Const_updateMs > 0 &&
-				Const_updateMs >= Const_featuredThresholdMs &&
-				!Function_isContentUpdateInFutureDay(Let_contentSingle, Const_nowMs)
-			) {
+			if (Const_updateMs > 0 && Const_updateMs >= Const_featuredThresholdMs) {
 				Const_featuredArray.push(Let_contentSingle)
 			}
 			else {
@@ -420,8 +424,8 @@ export default function Page_Library(): JSX.Element {
 		}
 
 		return {
-			featured: Function_sortLibrarySectionContentArray(Const_featuredArray),
-			old: Function_sortLibrarySectionContentArray(Const_oldArray)
+			featured: Function_sortLibraryFeaturedContentArray(Const_featuredArray),
+			old: Function_sortLibraryOldContentArray(Const_oldArray)
 		}
 	}, [isLibraryContentDisplayArray])
 
@@ -1233,13 +1237,13 @@ export default function Page_Library(): JSX.Element {
 
 					{Const_isUnavailable && Let_contentSingle.old_price_content &&
 					Let_contentSingle.old_price_content !== Let_contentSingle.current_price_content ? (
-						<span className="inline-flex min-h-8 items-center rounded-full bg-default-100 px-3 text-sm text-default-500 line-through">
+						<span className="inline-flex min-h-8 items-center rounded-full bg-new-tertiary-100 px-3 text-sm font-semibold text-new-tertiary-700 line-through">
 							{Function_formatCurrencyBRL(Let_contentSingle.old_price_content)}
 						</span>
 					) : null}
 
 					{Const_isUnavailable && Let_contentSingle.current_price_content ? (
-						<span className="inline-flex min-h-8 items-center rounded-full bg-success-100 px-3 text-sm font-semibold text-success-700">
+						<span className="inline-flex min-h-8 items-center rounded-full bg-new-secondary-100 px-3 text-sm font-semibold text-new-secondary-700">
 							{Function_formatCurrencyBRL(Let_contentSingle.current_price_content)}
 						</span>
 					) : null}
