@@ -43,6 +43,11 @@ const nextConfig = {
                 permanent: true,
             },
             {
+                source: "/inicio/suporte",
+                destination: "/home/suporte",
+                permanent: true,
+            },
+            {
                 source: "/politica",
                 destination: "/home/politica",
                 permanent: true,
