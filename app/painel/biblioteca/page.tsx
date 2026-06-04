@@ -35,6 +35,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "r
 
 const Const_studentSessionStorageKey = "somente_alunos_student_session_v1"
 const Const_featuredTimeWindowMs = 3 * 24 * 60 * 60 * 1000
+const Const_futureContentMinimumOffsetMs = 24 * 60 * 60 * 1000
 const Const_oldContentInitialVisibleCount = 5
 const Const_oldContentLoadMoreStep = 3
 
@@ -196,7 +197,7 @@ function Function_getContentUpdateMs(Parameter_content: Type_libraryDisplayConte
 	return Number.isNaN(Const_updateMs) ? 0 : Const_updateMs
 }
 
-function Function_isContentUpdateInFutureDay(
+function Function_isContentUpdateAtLeastOneDayInFuture(
 	Parameter_content: Type_libraryDisplayContent,
 	Parameter_nowMs: number
 ): boolean {
@@ -205,20 +206,7 @@ function Function_isContentUpdateInFutureDay(
 		return false
 	}
 
-	const Const_updateDate = new Date(Const_updateMs)
-	const Const_nowDate = new Date(Parameter_nowMs)
-	const Const_updateDayMs = new Date(
-		Const_updateDate.getFullYear(),
-		Const_updateDate.getMonth(),
-		Const_updateDate.getDate()
-	).getTime()
-	const Const_nowDayMs = new Date(
-		Const_nowDate.getFullYear(),
-		Const_nowDate.getMonth(),
-		Const_nowDate.getDate()
-	).getTime()
-
-	return Const_updateDayMs > Const_nowDayMs
+	return Const_updateMs - Parameter_nowMs >= Const_futureContentMinimumOffsetMs
 }
 
 function Function_hasOldPriceContent(Parameter_content: Type_libraryDisplayContent): boolean {
@@ -257,8 +245,8 @@ function Function_sortLibraryFeaturedContentArray(
 	return [...Parameter_contentArray].sort((Parameter_previous, Parameter_next) => {
 		const Const_previousUpdateMs = Function_getContentUpdateMs(Parameter_previous)
 		const Const_nextUpdateMs = Function_getContentUpdateMs(Parameter_next)
-		const Const_previousIsFuture = Function_isContentUpdateInFutureDay(Parameter_previous, Const_nowMs)
-		const Const_nextIsFuture = Function_isContentUpdateInFutureDay(Parameter_next, Const_nowMs)
+		const Const_previousIsFuture = Function_isContentUpdateAtLeastOneDayInFuture(Parameter_previous, Const_nowMs)
+		const Const_nextIsFuture = Function_isContentUpdateAtLeastOneDayInFuture(Parameter_next, Const_nowMs)
 
 		if (Const_previousIsFuture !== Const_nextIsFuture) {
 			return Const_previousIsFuture ? 1 : -1
