@@ -5,11 +5,13 @@ export const runtime = "edge"
 import { Type_panelSession } from "@/app/painel/layout_context"
 import { Component_HeaderIdChatbotContentServer } from "@/component/(path_[id-chatbot])/layout_[id-chatbot]/ui/header_[id-chatbot]/header_[id-chatbot]_content_server"
 import { Button, Card, CardBody, Spinner } from "@nextui-org/react"
-import { ArrowLeft, Banknote, CheckCircle2, Clock3, FilePlus2, FileText, LibraryBig, Wallet } from "lucide-react"
+import { ArrowLeft, Banknote, CheckCircle2, Clock3, FileText, Wallet } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 const Const_studentSessionStorageKey = "somente_alunos_student_session_v1"
+const Const_maintenanceFeeRate = 0.12
+const Const_sellerReceiptRate = 1 - Const_maintenanceFeeRate
 
 type Type_walletSaleInformation = {
 	name_content?: string;
@@ -62,6 +64,14 @@ function Function_formatCurrencyBRL(Parameter_value: number): string {
 	return `R$ ${Parameter_value.toFixed(2).replace(".", ",")}`
 }
 
+function Function_getSellerReceiptAmount(Parameter_amount: number): number {
+	return Number((Parameter_amount * Const_sellerReceiptRate).toFixed(2))
+}
+
+function Function_getMaintenanceFeeAmount(Parameter_amount: number): number {
+	return Number((Parameter_amount * Const_maintenanceFeeRate).toFixed(2))
+}
+
 function Function_getStudentAlias(Parameter_studentUuid: string): string {
 	return `@${(Parameter_studentUuid || "").split("-")[0] || "anonimo"}`
 }
@@ -78,9 +88,17 @@ export default function Page_Carteira(): JSX.Element {
 	const [isPendingAmount, setPendingAmount] = useState(0)
 	const [isReceivedAmount, setReceivedAmount] = useState(0)
 
-	const isTotalSoldAmount = useMemo(() => {
-		return Number((isPendingAmount + isReceivedAmount).toFixed(2))
-	}, [isPendingAmount, isReceivedAmount])
+	const isPendingReceiptAmount = useMemo(() => {
+		return Function_getSellerReceiptAmount(isPendingAmount)
+	}, [isPendingAmount])
+
+	const isReceivedReceiptAmount = useMemo(() => {
+		return Function_getSellerReceiptAmount(isReceivedAmount)
+	}, [isReceivedAmount])
+
+	const isTotalReceiptAmount = useMemo(() => {
+		return Number((isPendingReceiptAmount + isReceivedReceiptAmount).toFixed(2))
+	}, [isPendingReceiptAmount, isReceivedReceiptAmount])
 
 	const Function_fetchWallet = useCallback(async (): Promise<void> => {
 		try {
@@ -182,7 +200,7 @@ export default function Page_Carteira(): JSX.Element {
 								</div>
 							</div>
 							<div className="mb-4 rounded-xl border border-default-300 bg-default-50 p-3 text-sm text-default-700">
-								É aplicada uma taxa de 12% por transação para manutenção da plataforma, e o valor fica disponível após 7 dias por segurança contra possíveis reembolsos.
+								Os valores exibidos já consideram a taxa de manutenção de 12%. O repasse fica disponível após 7 dias por segurança contra possíveis reembolsos.
 							</div>
 
 							{isPageError ? (
@@ -193,21 +211,30 @@ export default function Page_Carteira(): JSX.Element {
 
 							<div className="mb-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
 								<div className="rounded-xl border border-default-300 bg-default-50 p-4">
-									<div className="text-sm text-default-600">Valor pendente</div>
+									<div className="text-sm text-default-600">A receber</div>
 									<div className="mt-1 text-xl font-semibold text-warning-700">
-										{Function_formatCurrencyBRL(isPendingAmount)}
+										{Function_formatCurrencyBRL(isPendingReceiptAmount)}
+									</div>
+									<div className="mt-1 text-xs text-default-500">
+										Taxa de 12% já aplicada
 									</div>
 								</div>
 								<div className="rounded-xl border border-default-300 bg-default-50 p-4">
-									<div className="text-sm text-default-600">Valor recebido</div>
+									<div className="text-sm text-default-600">Recebido</div>
 									<div className="mt-1 text-xl font-semibold text-success-700">
-										{Function_formatCurrencyBRL(isReceivedAmount)}
+										{Function_formatCurrencyBRL(isReceivedReceiptAmount)}
+									</div>
+									<div className="mt-1 text-xs text-default-500">
+										Taxa de 12% já aplicada
 									</div>
 								</div>
 								<div className="rounded-xl border border-default-300 bg-default-50 p-4">
-									<div className="text-sm text-default-600">Total vendido</div>
+									<div className="text-sm text-default-600">Total líquido</div>
 									<div className="mt-1 text-xl font-semibold text-default-900">
-										{Function_formatCurrencyBRL(isTotalSoldAmount)}
+										{Function_formatCurrencyBRL(isTotalReceiptAmount)}
+									</div>
+									<div className="mt-1 text-xs text-default-500">
+										Disponível para repasse
 									</div>
 								</div>
 							</div>
@@ -230,6 +257,8 @@ export default function Page_Carteira(): JSX.Element {
 									{isSoldArray.map((Let_saleSingle) => {
 										const Const_contentName = Let_saleSingle.informationContentSaleHistory?.name_content || "Conteúdo sem nome"
 										const Const_isCompletedSale = Let_saleSingle.statusSaleHistory === "completed"
+										const Const_saleMaintenanceFeeAmount = Function_getMaintenanceFeeAmount(Let_saleSingle.amountSaleHistory)
+										const Const_saleReceiptAmount = Function_getSellerReceiptAmount(Let_saleSingle.amountSaleHistory)
 										return (
 											<div
 												key={Let_saleSingle.saleHistoryUuid}
@@ -248,7 +277,7 @@ export default function Page_Carteira(): JSX.Element {
 
 												<div className="mt-3 flex flex-wrap gap-2">
 													<span className="inline-flex min-h-8 items-center rounded-full bg-success-100 px-3 text-sm font-semibold text-success-700">
-														{Function_formatCurrencyBRL(Let_saleSingle.amountSaleHistory)}
+														Recebe {Function_formatCurrencyBRL(Const_saleReceiptAmount)}
 													</span>
 													<span className={`inline-flex min-h-8 items-center rounded-full px-3 text-sm font-medium ${
 														Const_isCompletedSale ? "bg-success-100 text-success-700" : "bg-default-200 text-default-700"
@@ -261,6 +290,9 @@ export default function Page_Carteira(): JSX.Element {
 														{Let_saleSingle.paidToSellerSaleHistory ? <CheckCircle2 size={14} /> : <Clock3 size={14} />}
 														{Let_saleSingle.paidToSellerSaleHistory ? "Repasse efetuado" : "Repasse pendente"}
 													</span>
+												</div>
+												<div className="mt-2 text-xs text-default-500">
+													Venda de {Function_formatCurrencyBRL(Let_saleSingle.amountSaleHistory)} com {Function_formatCurrencyBRL(Const_saleMaintenanceFeeAmount)} de taxa de manutenção já aplicada.
 												</div>
 											</div>
 										)
