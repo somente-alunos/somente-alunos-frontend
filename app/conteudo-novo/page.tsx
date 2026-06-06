@@ -473,7 +473,7 @@ export default function Page_ConteudoNovo(): JSX.Element {
 									Após enviar o conteúdo, aguarde ate 24 horas para ele ser aprovado ou rejeitado por um administrador.
 								</div>
 								<div className="mb-4 rounded-xl border border-default-300 bg-default-50 p-3 text-sm text-default-700">
-									Ficamos com 3% do valor de cada transação para fins de manutenção. O valor da compra e liberado para você apos 7 dias, para dar tempo do cliente pedir reembolso caso queira.
+									É aplicada uma taxa de 12% por transação para manutenção da plataforma, e o valor fica disponível após 7 dias por segurança contra possíveis reembolsos.
 								</div>
 
 								{isPageError ? (
