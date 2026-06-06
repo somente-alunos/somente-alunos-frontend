@@ -200,7 +200,7 @@ export default function Page_Carteira(): JSX.Element {
 								</div>
 							</div>
 							<div className="mb-4 rounded-xl border border-default-300 bg-default-50 p-3 text-sm text-default-700">
-								Os valores exibidos já consideram a taxa de manutenção de 12%. O repasse fica disponível após 7 dias por segurança contra possíveis reembolsos.
+								Os valores exibidos já consideram a taxa de manutenção de 12%. O repasse fica disponível após 7 dias por segurança para possíveis reembolsos.
 							</div>
 
 							{isPageError ? (
@@ -215,17 +215,11 @@ export default function Page_Carteira(): JSX.Element {
 									<div className="mt-1 text-xl font-semibold text-warning-700">
 										{Function_formatCurrencyBRL(isPendingReceiptAmount)}
 									</div>
-									<div className="mt-1 text-xs text-default-500">
-										Taxa de 12% já aplicada
-									</div>
 								</div>
 								<div className="rounded-xl border border-default-300 bg-default-50 p-4">
 									<div className="text-sm text-default-600">Recebido</div>
 									<div className="mt-1 text-xl font-semibold text-success-700">
 										{Function_formatCurrencyBRL(isReceivedReceiptAmount)}
-									</div>
-									<div className="mt-1 text-xs text-default-500">
-										Taxa de 12% já aplicada
 									</div>
 								</div>
 								<div className="rounded-xl border border-default-300 bg-default-50 p-4">
@@ -290,9 +284,6 @@ export default function Page_Carteira(): JSX.Element {
 														{Let_saleSingle.paidToSellerSaleHistory ? <CheckCircle2 size={14} /> : <Clock3 size={14} />}
 														{Let_saleSingle.paidToSellerSaleHistory ? "Repasse efetuado" : "Repasse pendente"}
 													</span>
-												</div>
-												<div className="mt-2 text-xs text-default-500">
-													Venda de {Function_formatCurrencyBRL(Let_saleSingle.amountSaleHistory)} com {Function_formatCurrencyBRL(Const_saleMaintenanceFeeAmount)} de taxa de manutenção já aplicada.
 												</div>
 											</div>
 										)
