@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Function_clearAuthCookieOnServer } from '@/app/auth_cookie_client'
+import { Function_clearAdminAuthCookieOnServer } from '@/app/auth_cookie_client'
 
 const Const_adminSessionStorageKey = 'somente_alunos_admin_session_v1'
 const Const_getAdminConteudoQueryExample = `{
@@ -426,7 +426,7 @@ async function Function_clearAdminArtifacts(): Promise<void> {
 		localStorage.removeItem(Const_adminSessionStorageKey)
 	}
 
-	await Function_clearAuthCookieOnServer()
+	await Function_clearAdminAuthCookieOnServer()
 }
 
 function Component_FormSection(Parameter_props: { title: string; subtitle?: string; children: React.ReactNode }): JSX.Element {

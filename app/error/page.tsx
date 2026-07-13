@@ -2,13 +2,13 @@
 
 import { Button, Image } from "@nextui-org/react"
 import { useRouter } from "next/navigation"
-import { Function_clearAuthCookieOnServer } from "@/app/auth_cookie_client"
+import { Function_clearStudentAuthCookieOnServer } from "@/app/auth_cookie_client"
 
 export default function ErrorPage() {
     const router = useRouter()
 
     const Function_exitAndRetry = async (): Promise<void> => {
-        await Function_clearAuthCookieOnServer()
+        await Function_clearStudentAuthCookieOnServer()
         router.push('/entrar')
     }
 

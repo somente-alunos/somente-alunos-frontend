@@ -26,7 +26,7 @@ import React, { FormEvent, useEffect, useState } from "react"
 import { Headset, Github, ChevronRight, Info } from "lucide-react"
 import { Type_backendStudentLoginResponse } from "@/env"
 import { Function_markDeviceReportPendingAfterLogin } from "@/app/device_report_client"
-import { Function_clearAuthCookieOnServer } from "@/app/auth_cookie_client"
+import { Function_clearStudentAuthCookieOnServer } from "@/app/auth_cookie_client"
 
 const Const_studentSessionStorageKey = 'somente_alunos_student_session_v1'
 const Const_inviteCodeSuggestionStorageKey = 'somente_alunos_invite_code_suggestion_v1'
@@ -54,7 +54,7 @@ export default function LoginPage() {
             localStorage.removeItem(Const_studentSessionStorageKey)
         }
 
-        await Function_clearAuthCookieOnServer()
+        await Function_clearStudentAuthCookieOnServer()
     }
 
     const triggerErrorAnimation = () => {

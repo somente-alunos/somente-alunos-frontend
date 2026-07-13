@@ -9,7 +9,7 @@ import { Icon_Brand } from '@/icon/brand'
 import { ExitIcon } from '@/icon/exit'
 import { useEffect, useState } from 'react'
 import { useRouter } from "next/navigation"
-import { Function_clearAuthCookieOnServer } from '@/app/auth_cookie_client'
+import { Function_clearStudentAuthCookieOnServer } from '@/app/auth_cookie_client'
 
 export type Type_informationChatbot = {
     nameChatbot: string;
@@ -55,8 +55,8 @@ export function Component_HeaderIdChatbotContentServer({value: { isInfUser } }: 
 
         setHeaderActionLoadingTarget("logout")
 
-        // excluir cookie aut (HttpOnly: so o backend consegue expirar)
-        await Function_clearAuthCookieOnServer()
+        // excluir cookie aut do aluno (HttpOnly: so o backend consegue expirar)
+        await Function_clearStudentAuthCookieOnServer()
 
         if (typeof localStorage !== 'undefined') {
             localStorage.removeItem(Const_studentSessionStorageKey)
