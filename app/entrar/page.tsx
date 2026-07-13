@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation"
 import React, { FormEvent, useEffect, useState } from "react"
 import { Headset, Github, ChevronRight, Info } from "lucide-react"
 import { Type_backendStudentLoginResponse } from "@/env"
+import { Function_markDeviceReportPendingAfterLogin } from "@/app/device_report_client"
 
 const Const_studentSessionStorageKey = 'somente_alunos_student_session_v1'
 const Const_inviteCodeSuggestionStorageKey = 'somente_alunos_invite_code_suggestion_v1'
@@ -194,6 +195,9 @@ export default function LoginPage() {
                     }))
                 }
 
+                // JWT do perfil recem-logado ja esta nos cookies: libera o report de dispositivo na biblioteca.
+                Function_markDeviceReportPendingAfterLogin()
+
                 router.push('/painel/biblioteca?redirect=1')
                 setTimeout(() => {
                     setReady(false)
@@ -253,6 +257,9 @@ export default function LoginPage() {
             fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student-or-admin/faculdade/todas`, { credentials: 'include' })
                 .then((response) => {
                     if (response.ok) {
+                        // Sessao existente revalidada: o JWT nos cookies e do perfil atual.
+                        Function_markDeviceReportPendingAfterLogin()
+
                         router.push('/painel/biblioteca?redirect=1')
                         return
                     }

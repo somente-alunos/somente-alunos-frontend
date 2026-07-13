@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 //import { Inter } from "next/font/google";
 import "./globals.css";
 import { Component_PaymentStatusWatcherClient } from "./payment_status_watcher_client";
-import { Component_DeviceReportClient } from "./device_report_client";
 
 //const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +23,6 @@ export default function RootLayout({
       </head>
       <body /* className={inter.className} */>
         <Component_PaymentStatusWatcherClient />
-        <Component_DeviceReportClient />
         {children}
       </body>
     </html>

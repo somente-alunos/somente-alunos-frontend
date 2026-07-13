@@ -1,5 +1,6 @@
 "use client"
 
+import { Function_useDeviceReportOnLibrary } from "@/app/device_report_client"
 import { PageContext, Type_panelSession } from "@/app/painel/layout_context"
 import { Component_ContentViewerModalClient } from "@/component/shared/content_viewer_modal_client"
 import {
@@ -313,6 +314,9 @@ export default function Page_Library(): JSX.Element {
 		libraryBuyer: isLibraryBuyer,
 		refreshLibrary
 	} = useContext(PageContext)
+
+	// Unico ponto do site que reporta celular-ou-computador: entrada na biblioteca com JWT ja valido.
+	Function_useDeviceReportOnLibrary(!!isSession)
 
 	const [isPageLoading, setPageLoading] = useState(true)
 	const [isNavigationLoadingTarget, setNavigationLoadingTarget] = useState("")

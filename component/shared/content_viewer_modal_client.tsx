@@ -232,6 +232,7 @@ export function Component_ContentViewerModalClient(
 								</div>
 							) : Parameter_props.fileUrl ? (
 								<iframe
+									sandbox="allow-scripts"
 									ref={Parameter_props.iframeRef as RefObject<HTMLIFrameElement>}
 									src={Parameter_props.fileUrl}
 									title="Visualizador de conteúdo"
