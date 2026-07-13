@@ -655,17 +655,34 @@ export default function Page_Library(): JSX.Element {
 		setSession
 	])
 
-	const Function_openSelectionModal = useCallback((Parameter_mode: "mandatory" | "manual") => {
+	const Function_openSelectionModal = useCallback((
+		Parameter_mode: "mandatory" | "manual",
+		Parameter_isCourseArrayReady?: boolean
+	) => {
 		if (!isSession) {
 			return
 		}
 
 		const Const_shouldPreselectBySession = !isSession.student.is_suggested_information_student
+		const Const_suggestedCollegeUuid = isSession.student.college_uuid_student || ""
+
+		// Aluno sugerido que ja tem faculdade sugerida entra direto na etapa de curso; a etapa de faculdade continua acessivel pelo Voltar.
+		const Const_shouldSkipCollegeStep = (
+			Parameter_mode === "mandatory" &&
+			!Const_shouldPreselectBySession &&
+			!!Const_suggestedCollegeUuid &&
+			Parameter_isCourseArrayReady === true
+		)
+
 		setSelectionModalMode(Parameter_mode)
-		setSelectionModalStep("college")
+		setSelectionModalStep(Const_shouldSkipCollegeStep ? "course" : "college")
 		setSelectionStepLoading(false)
 		setSelectionModalError("")
-		setSelectedCollegeUuid(Const_shouldPreselectBySession ? (isSession.student.college_uuid_student || "") : "")
+		setSelectedCollegeUuid(
+			Const_shouldPreselectBySession
+				? Const_suggestedCollegeUuid
+				: (Const_shouldSkipCollegeStep ? Const_suggestedCollegeUuid : "")
+		)
 		setSelectedCourseUuid(Const_shouldPreselectBySession ? (isSession.student.course_uuid_student || "") : "")
 		setSelectionModalOpen(true)
 	}, [isSession])
@@ -1160,16 +1177,20 @@ export default function Page_Library(): JSX.Element {
 				setSelectedCollegeUuid(isShouldPreselectBySession ? Const_collegeUuidSession : "")
 				setSelectedCourseUuid(isShouldPreselectBySession ? Const_courseUuidSession : "")
 
+				let Let_isCourseArrayReady = false
+
 				if (Const_collegeUuidSession && isSession.courseArray.length > 0) {
 					setCourseArray(isSession.courseArray)
 					setCourseArrayCollegeUuid(Const_collegeUuidSession)
+					Let_isCourseArrayReady = true
 				}
 				else if (Const_collegeUuidSession) {
 					try {
-						await Function_loadCourseArrayByCollege(
+						const Const_courseArrayLoaded = await Function_loadCourseArrayByCollege(
 							Const_collegeUuidSession,
 							isShouldPreselectBySession ? Const_courseUuidSession : ""
 						)
+						Let_isCourseArrayReady = Const_courseArrayLoaded.length > 0
 					}
 					catch {
 						setCourseArray([])
@@ -1182,7 +1203,7 @@ export default function Page_Library(): JSX.Element {
 				}
 
 				if (isNeedSuggestionFlow) {
-					Function_openSelectionModal("mandatory")
+					Function_openSelectionModal("mandatory", Let_isCourseArrayReady)
 				}
 			}
 			catch {
