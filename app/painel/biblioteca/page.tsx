@@ -45,36 +45,31 @@ const Const_oldContentLoadMoreStep = 3
 const Const_syncPollIntervalMs = 1500
 const Const_syncCompleteHoldMs = 650
 
-// Fonte unica de verdade da curva de progresso: porcentagem -> quanto tempo a
-// barra leva para chegar nela PARTINDO DA PORCENTAGEM ANTERIOR. Ou seja, o valor
-// e a duracao do trecho, nao o instante acumulado: "80: 2_000" significa que ir
-// de 70% ate 80% leva 2 segundos. Dentro de cada trecho a barra anda em
-// velocidade constante, entao para acelerar ou desacelerar um pedaco especifico
-// basta mexer no numero dele, sem recalcular os seguintes.
-//
-// A sincronia real termina em um evento imprevisivel (a chegada do conteudo),
-// por isso a tabela para em 98%: os 100% sao sempre o salto final disparado por
-// Function_finishSync. Uma barra parada em 100% com o conteudo ainda ausente e
-// pior do que uma barra lenta.
 const Const_syncStepsMs: Record<number, number> = {
 	0: 0,
-	5: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	10: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	15: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	20: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	25: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	30: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	35: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	40: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	45: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	50: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	55: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
-	60: 2_000, // 20% -> 31% em 2s. Aos 3s a leitura e "um terco pronto": ETA aparente de ~10s.
-	80: 9_000, // 65% -> 80% em 9s. Comeca a desacelerar de forma perceptivel.
-	88: 11_000, // 80% -> 88% em 11s.
-	93: 15_000, // 88% -> 93% em 15s.
-	96: 15_000, // 93% -> 96% em 15s.
-	98: 25_000, // 96% -> 98% em 25s. Teto: 90s acumulados, Function_finishSync assume.
+	5: 1000,
+	10: 900,
+	15: 800,
+	20: 700,
+	25: 600,
+	30: 500,
+	35: 400,
+	40: 300,
+	45: 350,
+	50: 450,
+	55: 550,
+	60: 600,
+	65: 800,
+	70: 1_200,
+	75: 1_800,
+	80: 2_600,
+	85: 3_600,
+	90: 5_200,
+	92: 7_000,
+	94: 9_200,
+	96: 12_000,
+	98: 15_400,
+	100: 19_400
 }
 
 const Const_syncTimeline = Object.entries(Const_syncStepsMs)
@@ -433,6 +428,8 @@ export default function Page_Library(): JSX.Element {
 	const syncFinishTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const syncStartMsRef = useRef(0)
 	const syncProgressRef = useRef(0)
+	const syncBarRef = useRef<HTMLDivElement | null>(null)
+	const syncLabelRef = useRef<HTMLDivElement | null>(null)
 	const baselineLiveUuidsRef = useRef<Set<string>>(new Set())
 	const syncPollBusyRef = useRef(false)
 	const syncHasStartedRef = useRef(false)
@@ -880,6 +877,21 @@ export default function Page_Library(): JSX.Element {
 		}
 	}, [isNeedSuggestionFlow, isSelectionModalOpen, refreshLibrary])
 
+	// Pinta o progresso direto no DOM. Rodar isso a cada frame via setState
+	// re-renderizaria a pagina inteira 60x por segundo e derrubaria frames — que e
+	// justamente o que produz as micro-travadas na barra.
+	const Function_paintSync = useCallback((Parameter_percent: number): void => {
+		const Const_clamped = Math.min(Math.max(Parameter_percent, 0), 100)
+		syncProgressRef.current = Const_clamped
+
+		if (syncBarRef.current !== null) {
+			syncBarRef.current.style.transform = `scaleX(${Const_clamped / 100})`
+		}
+		if (syncLabelRef.current !== null) {
+			syncLabelRef.current.textContent = `${Math.round(Const_clamped)}%`
+		}
+	}, [])
+
 	const Function_finishSync = useCallback((): void => {
 		if (syncFinishingRef.current) {
 			return
@@ -895,7 +907,7 @@ export default function Page_Library(): JSX.Element {
 			syncPollIntervalRef.current = null
 		}
 
-		syncProgressRef.current = 100
+		Function_paintSync(100)
 		setSyncProgress(100)
 
 		syncFinishTimeoutRef.current = setTimeout(() => {
@@ -904,7 +916,7 @@ export default function Page_Library(): JSX.Element {
 			setSyncProgress(0)
 			syncFinishingRef.current = false
 		}, Const_syncCompleteHoldMs)
-	}, [])
+	}, [Function_paintSync])
 
 	useEffect(() => {
 		if (isPageLoading || syncHasStartedRef.current || !isLibraryBuyer || isFeaturedHasLiveContent) {
@@ -920,7 +932,9 @@ export default function Page_Library(): JSX.Element {
 
 		syncHasStartedRef.current = true
 		baselineLiveUuidsRef.current = new Set(isLiveUuidSet)
-		syncStartMsRef.current = Date.now()
+		// performance.now() e a mesma base de tempo do timestamp que o rAF entrega,
+		// entao o elapsed nunca sai de sincronia com o frame que esta sendo pintado.
+		syncStartMsRef.current = performance.now()
 		syncFinishingRef.current = false
 		syncProgressRef.current = 0
 		setSyncProgress(0)
@@ -932,21 +946,15 @@ export default function Page_Library(): JSX.Element {
 			return
 		}
 
-		const Function_tick = (): void => {
-			const Const_elapsedMs = Date.now() - syncStartMsRef.current
+		const Function_tick = (Parameter_nowMs: number): void => {
+			const Const_elapsedMs = Parameter_nowMs - syncStartMsRef.current
 
 			if (Const_elapsedMs >= Const_syncDurationMs) {
 				Function_finishSync()
 				return
 			}
 
-			const Const_next = Function_syncCurve(Const_elapsedMs)
-			// A barra so cresce, e cada frame que muda menos de 0.1% nao vale um
-			// re-render da pagina inteira.
-			if (Const_next - syncProgressRef.current >= 0.1) {
-				syncProgressRef.current = Const_next
-				setSyncProgress(Const_next)
-			}
+			Function_paintSync(Function_syncCurve(Const_elapsedMs))
 
 			syncRafRef.current = requestAnimationFrame(Function_tick)
 		}
@@ -974,7 +982,7 @@ export default function Page_Library(): JSX.Element {
 				syncPollIntervalRef.current = null
 			}
 		}
-	}, [isSyncActive, refreshLibrary, Function_finishSync])
+	}, [isSyncActive, refreshLibrary, Function_finishSync, Function_paintSync])
 
 	useEffect(() => {
 		if (!isSyncActive) {
@@ -1628,16 +1636,23 @@ export default function Page_Library(): JSX.Element {
 										: "Buscando os conteúdos mais recentes."}
 								</div>
 							</div>
-							<div className="shrink-0 text-sm font-bold tabular-nums text-new-primary">
-								{Math.round(isSyncProgress)}%
+							{/* Conteudo pintado por Function_paintSync a cada frame. O valor abaixo e
+							    so o estado inicial e o que um re-render eventual deve reescrever, por
+							    isso le do ref (sempre atual) e nao do state (que so muda no fim). */}
+							<div
+								ref={syncLabelRef}
+								className="shrink-0 text-sm font-bold tabular-nums text-new-primary"
+							>
+								{Math.round(syncProgressRef.current)}%
 							</div>
 						</div>
 
 						<div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-default-200/80">
 							<div
+								ref={syncBarRef}
 								className="h-full w-full origin-left rounded-full bg-gradient-to-r from-new-primary-700 via-new-primary to-new-primary-400 will-change-transform"
 								style={{
-									transform: `scaleX(${Math.min(Math.max(isSyncProgress, 0), 100) / 100})`,
+									transform: `scaleX(${Math.min(Math.max(syncProgressRef.current, 0), 100) / 100})`,
 								}}
 							/>
 						</div>

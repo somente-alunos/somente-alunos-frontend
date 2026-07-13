@@ -119,6 +119,7 @@ export default function Layout_Painel(Parameter_content: Readonly<{ children: Re
 	const [isLibraryBuyer, setLibraryBuyer] = useState(false)
 	const [isStudentUuidHeader, setStudentUuidHeader] = useState('')
 	const isLibrarySignatureRef = useRef(Function_getLibrarySignature([]))
+	const isLibraryBuyerRef = useRef(false)
 
 	const Function_getRedirectToLoginUrl = useCallback((): string => {
 		if (typeof window === 'undefined') {
@@ -164,12 +165,26 @@ export default function Layout_Painel(Parameter_content: Readonly<{ children: Re
 		const Const_contentArray = Array.isArray(Const_responseBody.contentArray) ? Const_responseBody.contentArray : []
 		const Const_buyer = Const_responseBody.buyer === true
 		const Const_nextSignature = Function_getLibrarySignature(Const_contentArray)
-		if (isLibrarySignatureRef.current !== Const_nextSignature) {
+
+		const Const_isContentChanged = isLibrarySignatureRef.current !== Const_nextSignature
+		const Const_isBuyerChanged = isLibraryBuyerRef.current !== Const_buyer
+
+		if (Const_isContentChanged) {
 			isLibrarySignatureRef.current = Const_nextSignature
 			setLibraryContentArray(Const_contentArray)
 		}
-		setLibraryBuyer(Const_buyer)
-		Function_saveLibraryOnStorage(Const_storageKey, Const_contentArray, Const_buyer)
+		if (Const_isBuyerChanged) {
+			isLibraryBuyerRef.current = Const_buyer
+			setLibraryBuyer(Const_buyer)
+		}
+
+		// localStorage.setItem e sincrono e escreve em disco: rodar isso a cada poll
+		// (1.5s) trava a main thread e faz a barra, o percentual e ate as animacoes de
+		// CSS engasgarem. So grava quando algo realmente mudou.
+		if (Const_isContentChanged || Const_isBuyerChanged) {
+			Function_saveLibraryOnStorage(Const_storageKey, Const_contentArray, Const_buyer)
+		}
+
 		return Const_contentArray
 	}, [isSession, Function_redirectToLogin])
 
@@ -197,6 +212,7 @@ export default function Layout_Painel(Parameter_content: Readonly<{ children: Re
 				isLibrarySignatureRef.current = Const_cachedSignature
 				setLibraryContentArray(Const_cached.contentArray)
 			}
+			isLibraryBuyerRef.current = Const_cached.buyer
 			setLibraryBuyer(Const_cached.buyer)
 		}
 		else {
