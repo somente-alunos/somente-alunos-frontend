@@ -2,6 +2,7 @@
 
 import { Function_useDeviceReportOnLibrary } from "@/app/device_report_client"
 import { PageContext, Type_panelSession } from "@/app/painel/layout_context"
+import { Function_injectIframeResizerChildScript } from "@/component/shared/content_viewer_iframe_html"
 import { Component_ContentViewerModalClient } from "@/component/shared/content_viewer_modal_client"
 import {
 	Type_backendCollege,
@@ -340,7 +341,6 @@ export default function Page_Library(): JSX.Element {
 	const [isViewerItem, setViewerItem] = useState<Type_backendContentBiblioteca | null>(null)
 	const [isViewerFileUrl, setViewerFileUrl] = useState("")
 	const [isViewerFileMimeType, setViewerFileMimeType] = useState("")
-	const [isViewerIframeHeightPx, setViewerIframeHeightPx] = useState(0)
 	const [isViewerDownloadLoading, setViewerDownloadLoading] = useState(false)
 	const [isPressedLibraryCardUuid, setPressedLibraryCardUuid] = useState("")
 	const [isOldContentVisibleCount, setOldContentVisibleCount] = useState(Const_oldContentInitialVisibleCount)
@@ -349,7 +349,6 @@ export default function Page_Library(): JSX.Element {
 	const [isSyncProgress, setSyncProgress] = useState(0)
 
 	const isViewerFileUrlRef = useRef("")
-	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
 	const isCatalogRefreshBusyRef = useRef(false)
 
 	const syncRafRef = useRef<number | null>(null)
@@ -490,7 +489,6 @@ export default function Page_Library(): JSX.Element {
 		}
 		setViewerFileUrl("")
 		setViewerFileMimeType("")
-		setViewerIframeHeightPx(0)
 	}, [])
 
 	const Function_fetchCollegeArray = useCallback(async (): Promise<Type_backendCollege[]> => {
@@ -725,60 +723,23 @@ export default function Page_Library(): JSX.Element {
 		}
 
 		const Const_blob = await Const_response.blob()
+		const Const_mimeType = (Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase()
+		const Const_isHtml = Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
+
+		// O iframe do visualizador e sandboxed, entao a altura so chega via child do iframe-resizer.
+		const Const_viewerBlob = Const_isHtml
+			? new Blob(
+				[Function_injectIframeResizerChildScript(await Const_blob.text())],
+				{ type: Const_mimeType || "text/html" }
+			)
+			: Const_blob
+
 		Function_clearViewerFileUrl()
-		const Const_blobUrl = URL.createObjectURL(Const_blob)
+		const Const_blobUrl = URL.createObjectURL(Const_viewerBlob)
 		isViewerFileUrlRef.current = Const_blobUrl
 		setViewerFileUrl(Const_blobUrl)
-		setViewerFileMimeType((Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase())
+		setViewerFileMimeType(Const_mimeType)
 	}, [Const_router, Function_clearViewerFileUrl])
-
-	const Function_syncViewerIframeHeight = useCallback(() => {
-		if (!isViewerHtmlFile) {
-			return
-		}
-
-		const Const_iframe = isViewerIframeRef.current
-		if (!Const_iframe) {
-			return
-		}
-
-		try {
-			const Const_document = Const_iframe.contentDocument
-			if (!Const_document) {
-				return
-			}
-
-			const Const_body = Const_document.body
-			const Const_root = Const_document.documentElement
-			let Let_nextHeight = Math.max(
-				Const_body?.scrollHeight || 0,
-				Const_root?.scrollHeight || 0,
-				Const_body?.offsetHeight || 0,
-				Const_root?.offsetHeight || 0
-			)
-
-			if (Const_root?.offsetHeight >= 3000) {
-				Let_nextHeight = Const_root?.offsetHeight + 100
-			}
-
-			if (Let_nextHeight > 0) {
-				setViewerIframeHeightPx(Let_nextHeight)
-			}
-		}
-		catch {
-			// Ignora erro silenciosamente quando o browser bloqueia leitura do iframe.
-		}
-	}, [isViewerHtmlFile])
-
-	const Function_handleViewerIframeLoad = useCallback(() => {
-		if (!isViewerHtmlFile) {
-			return
-		}
-
-		Function_syncViewerIframeHeight()
-		window.setTimeout(Function_syncViewerIframeHeight, 120)
-		window.setTimeout(Function_syncViewerIframeHeight, 600)
-	}, [isViewerHtmlFile, Function_syncViewerIframeHeight])
 
 	const Function_openViewer = useCallback(async (Parameter_content: Type_backendContentBiblioteca): Promise<void> => {
 		try {
@@ -800,19 +761,6 @@ export default function Page_Library(): JSX.Element {
 		setViewerDownloadLoading(false)
 		Function_clearViewerFileUrl()
 	}, [Function_clearViewerFileUrl])
-
-	useEffect(() => {
-		if (!isViewerModalOpen || !isViewerHtmlFile || !isViewerFileUrl) {
-			return
-		}
-
-		const Const_timeoutIdShort = window.setTimeout(Function_syncViewerIframeHeight, 80)
-		const Const_timeoutIdLong = window.setTimeout(Function_syncViewerIframeHeight, 900)
-		return () => {
-			window.clearTimeout(Const_timeoutIdShort)
-			window.clearTimeout(Const_timeoutIdLong)
-		}
-	}, [isViewerModalOpen, isViewerHtmlFile, isViewerFileUrl, Function_syncViewerIframeHeight])
 
 	useEffect(() => {
 		setOldContentVisibleCount(Const_oldContentInitialVisibleCount)
@@ -1937,9 +1885,6 @@ export default function Page_Library(): JSX.Element {
 				isLoading={isViewerLoading}
 				fileUrl={isViewerFileUrl}
 				isHtmlFile={isViewerHtmlFile}
-				iframeRef={isViewerIframeRef}
-				onIframeLoad={Function_handleViewerIframeLoad}
-				iframeHeightPx={isViewerIframeHeightPx}
 				errorMessage={isViewerError}
 				reportContentUuid={isViewerItem?.content_uuid || ""}
 				topActions={isViewerItem?.isAcquiredContent ? (

@@ -9,9 +9,10 @@ import {
 	ModalHeader,
 	Spinner
 } from "@nextui-org/react"
+import iframeResize from "@iframe-resizer/parent"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { useCallback, useMemo, useState, type ReactNode, type RefObject } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 type Type_contentViewerModalClientProps = {
 	isOpen: boolean;
@@ -20,9 +21,6 @@ type Type_contentViewerModalClientProps = {
 	isLoading: boolean;
 	fileUrl: string;
 	isHtmlFile: boolean;
-	iframeRef: RefObject<HTMLIFrameElement | null>;
-	onIframeLoad: () => void;
-	iframeHeightPx: number;
 	errorMessage: string;
 	reportContentUuid?: string | null;
 	topActions?: ReactNode;
@@ -57,6 +55,8 @@ export function Component_ContentViewerModalClient(
 	const [isReportStatus, setReportStatus] = useState<"idle" | "loading" | "success">("idle")
 	const [isReportError, setReportError] = useState("")
 
+	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
+
 	const Const_warningContent = Parameter_props.warningContent || Const_defaultWarningContent
 	const Const_hasContentUuidToReport = typeof Parameter_props.reportContentUuid === "string" && Parameter_props.reportContentUuid.trim().length > 0
 	const Const_reportCanSubmit = isReportReasonArray.length > 0 && isReportStatus !== "loading"
@@ -64,6 +64,39 @@ export function Component_ContentViewerModalClient(
 	const Const_reportReasonSet = useMemo(() => {
 		return new Set(isReportReasonArray)
 	}, [isReportReasonArray])
+
+	/**
+	 * O iframe roda com sandbox="allow-scripts", ou seja, origem opaca: nao da para ler o
+	 * contentDocument dele. Quem mede a altura do conteudo e reporta por postMessage e o child
+	 * do iframe-resizer, injetado no HTML antes do blob ser criado (Function_injectIframeResizerChildScript).
+	 */
+	useEffect(() => {
+		if (!Parameter_props.isOpen || Parameter_props.isLoading || !Parameter_props.isHtmlFile || !Parameter_props.fileUrl) {
+			return
+		}
+
+		const Const_iframe = isViewerIframeRef.current
+		if (!Const_iframe) {
+			return
+		}
+
+		const Const_connectedIframeArray = iframeResize(
+			{
+				license: "GPLv3",
+				// A origem do iframe sandboxed e "null", entao a checagem por origem nunca casaria.
+				checkOrigin: false,
+				direction: "vertical",
+				log: false
+			},
+			Const_iframe
+		)
+
+		return () => {
+			for (const Const_connectedIframe of Const_connectedIframeArray) {
+				Const_connectedIframe.iFrameResizer?.disconnect()
+			}
+		}
+	}, [Parameter_props.isOpen, Parameter_props.isLoading, Parameter_props.isHtmlFile, Parameter_props.fileUrl])
 
 	const Function_handleOpenReportModal = useCallback((): void => {
 		setReportStatus("idle")
@@ -233,16 +266,12 @@ export function Component_ContentViewerModalClient(
 							) : Parameter_props.fileUrl ? (
 								<iframe
 									sandbox="allow-scripts"
-									ref={Parameter_props.iframeRef as RefObject<HTMLIFrameElement>}
+									ref={isViewerIframeRef}
 									src={Parameter_props.fileUrl}
 									title="Visualizador de conteúdo"
-									onLoad={Parameter_props.onIframeLoad}
 									className={Parameter_props.isHtmlFile
-										? "!m-0 !p-0 w-full border-0 bg-transparent"
+										? "!m-0 !p-0 w-full min-h-[720px] border-0 bg-transparent"
 										: "!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"}
-									style={Parameter_props.isHtmlFile
-										? { height: `${Math.max(720, Parameter_props.iframeHeightPx)}px` }
-										: undefined}
 								/>
 							) : (
 								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex items-center justify-center text-default-600 text-base px-4 text-center">

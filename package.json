@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "prepare": "node scripts/sync_iframe_resizer_child.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -11,13 +12,14 @@
     "preview": "npm run pages:build && wrangler pages dev",
     "deploy": "npm run pages:build && wrangler pages deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts",
-
     "tunnel": "%CD%/tunnel_local/cloudflared.exe tunnel --origincert=%USERPROFILE%\\.cloudflared\\credencial_somentealunos.vip\\cert.pem --url http://localhost:3000 run local_somentealunos_v1",
-		"log-production": "npx wrangler tail somente-alunos-backend-production",
-		"log-dev": "npx wrangler tail somente-alunos-backend-dev"
+    "log-production": "npx wrangler tail somente-alunos-backend-production",
+    "log-dev": "npx wrangler tail somente-alunos-backend-dev"
   },
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.11.3",
+    "@iframe-resizer/child": "^5.5.9",
+    "@iframe-resizer/parent": "^5.5.9",
     "@nextui-org/react": "^2.4.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.2.10",

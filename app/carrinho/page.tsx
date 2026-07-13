@@ -9,6 +9,7 @@ import {
 	Function_savePendingPayment
 } from "@/app/payment_status_watcher_client"
 import { Component_HeaderIdChatbotContentServer } from "@/component/(path_[id-chatbot])/layout_[id-chatbot]/ui/header_[id-chatbot]/header_[id-chatbot]_content_server"
+import { Function_injectIframeResizerChildScript } from "@/component/shared/content_viewer_iframe_html"
 import { Component_ContentViewerModalClient } from "@/component/shared/content_viewer_modal_client"
 import {
 	Type_backendContent,
@@ -176,9 +177,7 @@ export default function Page_Carrinho(): JSX.Element {
 	const [isViewerItem, setViewerItem] = useState<Type_cartDisplayContent | null>(null)
 	const [isViewerFileUrl, setViewerFileUrl] = useState("")
 	const [isViewerFileMimeType, setViewerFileMimeType] = useState("")
-	const [isViewerIframeHeightPx, setViewerIframeHeightPx] = useState(0)
 
-	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
 	const isViewerFileUrlRef = useRef("")
 	const isCartSignatureRef = useRef(Function_getCartSignature([]))
 	const isPaymentPollIntervalRef = useRef<number | null>(null)
@@ -488,7 +487,6 @@ export default function Page_Carrinho(): JSX.Element {
 
 		setViewerFileUrl("")
 		setViewerFileMimeType("")
-		setViewerIframeHeightPx(0)
 	}, [])
 
 	const Function_loadViewerFile = useCallback(async (Parameter_content: Type_cartDisplayContent): Promise<void> => {
@@ -510,11 +508,22 @@ export default function Page_Carrinho(): JSX.Element {
 			}
 
 			const Const_blob = await Const_response.blob()
+			const Const_mimeType = (Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase()
+			const Const_isHtml = Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
+
+			// O iframe do visualizador e sandboxed, entao a altura so chega via child do iframe-resizer.
+			const Const_viewerBlob = Const_isHtml
+				? new Blob(
+					[Function_injectIframeResizerChildScript(await Const_blob.text())],
+					{ type: Const_mimeType || "text/html" }
+				)
+				: Const_blob
+
 			Function_clearViewerFileUrl()
-			const Const_blobUrl = URL.createObjectURL(Const_blob)
+			const Const_blobUrl = URL.createObjectURL(Const_viewerBlob)
 			isViewerFileUrlRef.current = Const_blobUrl
 			setViewerFileUrl(Const_blobUrl)
-			setViewerFileMimeType((Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase())
+			setViewerFileMimeType(Const_mimeType)
 		}
 		catch {
 			setViewerError("Não foi possível abrir a prévia desse conteúdo agora.")
@@ -523,50 +532,6 @@ export default function Page_Carrinho(): JSX.Element {
 			setViewerLoading(false)
 		}
 	}, [Const_router, Function_clearViewerFileUrl])
-
-	const Function_syncViewerIframeHeight = useCallback(() => {
-		if (!isViewerHtmlFile) {
-			return
-		}
-
-		const Const_iframe = isViewerIframeRef.current
-		if (!Const_iframe) {
-			return
-		}
-
-		try {
-			const Const_document = Const_iframe.contentDocument
-			if (!Const_document) {
-				return
-			}
-
-			const Const_body = Const_document.body
-			const Const_root = Const_document.documentElement
-			const Const_nextHeight = Math.max(
-				Const_body?.scrollHeight || 0,
-				Const_root?.scrollHeight || 0,
-				Const_body?.offsetHeight || 0,
-				Const_root?.offsetHeight || 0
-			)
-
-			if (Const_nextHeight > 0) {
-				setViewerIframeHeightPx(Const_nextHeight)
-			}
-		}
-		catch {
-			// Ignora erro silenciosamente quando o browser bloqueia leitura do iframe.
-		}
-	}, [isViewerHtmlFile])
-
-	const Function_handleViewerIframeLoad = useCallback(() => {
-		if (!isViewerHtmlFile) {
-			return
-		}
-
-		Function_syncViewerIframeHeight()
-		window.setTimeout(Function_syncViewerIframeHeight, 120)
-		window.setTimeout(Function_syncViewerIframeHeight, 600)
-	}, [isViewerHtmlFile, Function_syncViewerIframeHeight])
 
 	const Function_openPreview = useCallback(async (Parameter_content: Type_cartDisplayContent): Promise<void> => {
 		setViewerItem(Parameter_content)
@@ -581,19 +546,6 @@ export default function Page_Carrinho(): JSX.Element {
 		setViewerError("")
 		Function_clearViewerFileUrl()
 	}, [Function_clearViewerFileUrl])
-
-	useEffect(() => {
-		if (!isViewerModalOpen || !isViewerHtmlFile || !isViewerFileUrl) {
-			return
-		}
-
-		const Const_timeoutIdShort = window.setTimeout(Function_syncViewerIframeHeight, 80)
-		const Const_timeoutIdLong = window.setTimeout(Function_syncViewerIframeHeight, 900)
-		return () => {
-			window.clearTimeout(Const_timeoutIdShort)
-			window.clearTimeout(Const_timeoutIdLong)
-		}
-	}, [isViewerModalOpen, isViewerHtmlFile, isViewerFileUrl, Function_syncViewerIframeHeight])
 
 	useEffect(() => {
 		return () => {
@@ -1082,9 +1034,6 @@ export default function Page_Carrinho(): JSX.Element {
 				isLoading={isViewerLoading}
 				fileUrl={isViewerFileUrl}
 				isHtmlFile={isViewerHtmlFile}
-				iframeRef={isViewerIframeRef}
-				onIframeLoad={Function_handleViewerIframeLoad}
-				iframeHeightPx={isViewerIframeHeightPx}
 				errorMessage={isViewerError}
 				reportContentUuid={isViewerItem?.content_uuid || ""}
 			/>
