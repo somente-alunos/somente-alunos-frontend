@@ -98,63 +98,118 @@ export default function LoginPage() {
             return ""
         }
 
-        const Function_normalizeInviteCode = (Parameter_value: string): string => {
-            return Parameter_value.trim().toUpperCase()
-        }
-
-        try {
-            const Const_rawValue = localStorage.getItem(Const_inviteCodeSuggestionStorageKey)
-            if (!Const_rawValue) {
-                return ""
-            }
-
-            const Const_unknownValue = JSON.parse(Const_rawValue) as unknown
-            if (typeof Const_unknownValue === "string") {
-                return Function_normalizeInviteCode(Const_unknownValue)
-            }
-
-            if (Array.isArray(Const_unknownValue)) {
-                const Const_firstInviteCode = Const_unknownValue.find(
-                    (Parameter_single): Parameter_single is string => typeof Parameter_single === "string"
-                )
-                return Const_firstInviteCode ? Function_normalizeInviteCode(Const_firstInviteCode) : ""
-            }
-
+        const Const_rawValue = localStorage.getItem(Const_inviteCodeSuggestionStorageKey)
+        if (!Const_rawValue) {
             return ""
         }
-        catch {
-            // Compatibilidade com valor salvo como texto puro.
-            const Const_rawValue = localStorage.getItem(Const_inviteCodeSuggestionStorageKey) || ""
-            return Function_normalizeInviteCode(Const_rawValue)
+
+        // Versoes antigas gravavam o codigo como JSON (string ou array de strings).
+        if (Const_rawValue.startsWith('"') || Const_rawValue.startsWith('[')) {
+            try {
+                const Const_unknownValue = JSON.parse(Const_rawValue) as unknown
+                if (typeof Const_unknownValue === "string") {
+                    return Const_unknownValue.trim().toUpperCase()
+                }
+                if (Array.isArray(Const_unknownValue)) {
+                    const Const_firstInviteCode = Const_unknownValue.find(
+                        (Parameter_single): Parameter_single is string => typeof Parameter_single === "string"
+                    )
+                    return Const_firstInviteCode ? Const_firstInviteCode.trim().toUpperCase() : ""
+                }
+                return ""
+            }
+            catch {
+                return ""
+            }
         }
+
+        return Const_rawValue.trim().toUpperCase()
     }
 
-    const Function_saveInviteCodeSuggestionOnStorage = (Parameter_inviteCode: string): void => {
+    const Function_registerInviteCodeSuggestion = (Parameter_inviteCode: string): void => {
         if (typeof localStorage === 'undefined') {
             return
         }
 
-        localStorage.setItem(Const_inviteCodeSuggestionStorageKey, Parameter_inviteCode)
-    }
-
-    const Function_registerInviteCodeSuggestion = (Parameter_inviteCode: string): void => {
         const Const_codeNormalized = Parameter_inviteCode.trim().toUpperCase()
         if (!Const_codeNormalized) {
             return
         }
 
-        Function_saveInviteCodeSuggestionOnStorage(Const_codeNormalized)
+        localStorage.setItem(Const_inviteCodeSuggestionStorageKey, Const_codeNormalized)
+    }
+
+    const Function_handleInviteCodeChange = (Parameter_typedValue: string): void => {
+        const Const_codeNormalized = Parameter_typedValue.trim().toUpperCase()
+        setInviteCode(Const_codeNormalized)
+
+        // Salva assim que o aluno termina de digitar o codigo: nao depende do login dar certo.
+        if (Const_codeNormalized.length === 6) {
+            Function_registerInviteCodeSuggestion(Const_codeNormalized)
+        }
+    }
+
+    // O RA/CPF nunca vai para o localStorage: quem guarda e o gerenciador de credenciais do proprio
+    // navegador. Como o login por senha esta desativado, o formulario nao tem campo type="password" e
+    // o navegador jamais ofereceria salvar sozinho, entao pedimos isso pela Credential Management API.
+    // Suportada em Chrome/Edge/Android; nos demais navegadores as funcoes abaixo viram no-op.
+    const Function_saveLoginOnBrowserCredentialManager = async (
+        Parameter_raOrCpf: string,
+        Parameter_inviteCode: string
+    ): Promise<void> => {
+        try {
+            const Const_passwordCredentialConstructor = (window as any).PasswordCredential
+            if (!Const_passwordCredentialConstructor || !navigator.credentials?.store) {
+                return
+            }
+            if (!Parameter_raOrCpf || !Parameter_inviteCode) {
+                return
+            }
+
+            await navigator.credentials.store(new Const_passwordCredentialConstructor({
+                id: Parameter_raOrCpf,
+                password: Parameter_inviteCode,
+                name: Parameter_raOrCpf
+            }))
+        }
+        catch {
+            // Navegador sem suporte ou usuario recusou: o login em si nao pode quebrar por causa disso.
+        }
+    }
+
+    const Function_prefillFromBrowserCredentialManager = async (): Promise<void> => {
+        try {
+            if (!navigator.credentials?.get) {
+                return
+            }
+
+            const Const_credential = await navigator.credentials.get({
+                password: true,
+                mediation: 'silent'
+            } as CredentialRequestOptions) as { id?: string, password?: string } | null
+
+            if (!Const_credential?.id) {
+                return
+            }
+
+            // Nao sobrescreve o que veio da URL nem o que o aluno ja comecou a digitar.
+            setUsername((Parameter_current) => Parameter_current || Const_credential.id || "")
+            if (Const_credential.password) {
+                setInviteCode((Parameter_current) => Parameter_current || (Const_credential.password || "").trim().toUpperCase())
+            }
+        }
+        catch {
+            // Sem credencial salva ou navegador sem suporte: o formulario segue vazio, sem erro.
+        }
     }
 
     const executeLogin = async (
         raOrCpf: string,
         password?: string,
-        invitationCodeStudent?: string,
-        Parameter_options?: { shouldSaveInviteCodeSuggestion?: boolean }
+        invitationCodeStudent?: string
     ) => {
         try {
             setReady(true)
-            const Const_shouldSaveInviteCodeSuggestion = Parameter_options?.shouldSaveInviteCodeSuggestion !== false
 
             const payload: { raOrCpf: string, invitationCodeStudent?: string, password?: string } = {
                 raOrCpf: raOrCpf
@@ -175,8 +230,9 @@ export default function LoginPage() {
     
             if (response.ok) {
                 const result = await response.json() as Type_backendStudentLoginResponse
-                if (invitationCodeStudent && Const_shouldSaveInviteCodeSuggestion) {
-                    Function_registerInviteCodeSuggestion(invitationCodeStudent)
+
+                if (invitationCodeStudent) {
+                    await Function_saveLoginOnBrowserCredentialManager(raOrCpf, invitationCodeStudent)
                 }
 
                 if (typeof localStorage !== 'undefined') {
@@ -217,6 +273,24 @@ export default function LoginPage() {
             const conviteParam = params.get('convite')
             const conviteParamNormalized = (conviteParam || '').trim().toUpperCase()
 
+            // O convite da URL sobrescreve a sugestao salva; sem convite na URL, reaproveita o ultimo
+            // codigo usado. Em qualquer caminho abaixo o input ja fica preenchido.
+            if (conviteParamNormalized) {
+                Function_registerInviteCodeSuggestion(conviteParamNormalized)
+                setInviteCode(conviteParamNormalized)
+            }
+            else if (Const_inviteCodeSuggestion) {
+                setInviteCode(Const_inviteCodeSuggestion)
+            }
+
+            if (loginParam) {
+                setUsername(loginParam)
+            }
+            else {
+                // Sem await: e so um preenchimento de conveniencia, nao pode atrasar a tela de login.
+                void Function_prefillFromBrowserCredentialManager()
+            }
+
             if (hasRedirectFlag) {
                 await Function_clearAccessArtifacts()
                 setLoad(false)
@@ -227,18 +301,11 @@ export default function LoginPage() {
 
             if (loginParam && conviteParamNormalized) {
                 await Function_clearAccessArtifacts()
-                setUsername(loginParam)
-                setInviteCode(conviteParamNormalized)
                 setUsePassword(false)
                 setLoad(false)
 
-                await executeLogin(loginParam, undefined, conviteParamNormalized, { shouldSaveInviteCodeSuggestion: false })
+                await executeLogin(loginParam, undefined, conviteParamNormalized)
                 return
-            }
-
-            if (conviteParamNormalized) {
-                setInviteCode(conviteParamNormalized)
-                Function_registerInviteCodeSuggestion(conviteParamNormalized)
             }
 
             let hasSessionStorage = false
@@ -266,10 +333,6 @@ export default function LoginPage() {
                 await Function_clearAccessArtifacts()
                 setReady(false)
                 return
-            }
-
-            if (!conviteParamNormalized && Const_inviteCodeSuggestion) {
-                setInviteCode(Const_inviteCodeSuggestion)
             }
 
             if (ALLOW_PASSWORD_LOGIN) {
@@ -301,6 +364,7 @@ export default function LoginPage() {
         if (usePassword) {
             await executeLogin(cpfOrRa, password)
         } else {
+            Function_registerInviteCodeSuggestion(inviteCode)
             await executeLogin(cpfOrRa, undefined, inviteCode)
         }
         return false
@@ -431,10 +495,14 @@ export default function LoginPage() {
                         <Spacer y={1} />
                         <Input
                             isInvalid={isInvalid}
+                            id="username"
                             name="username"
                             value={username}
                             onValueChange={setUsername}
                             autoComplete="username"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck={false}
                             required
                             minLength={3}
                             className="max-w-[370px]"
@@ -494,7 +562,7 @@ export default function LoginPage() {
                                     isInvalid={isInvalid}
                                     name="invitationCodeStudent"
                                     value={inviteCode}
-                                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                                    onChange={(e) => Function_handleInviteCodeChange(e.target.value)}
                                     autoComplete="on"
                                     autoCapitalize="characters"
                                     autoCorrect="off"
