@@ -406,6 +406,9 @@ export default function Page_Library(): JSX.Element {
 	const [isCourseArrayCollegeUuid, setCourseArrayCollegeUuid] = useState("")
 	const [isSelectedCollegeUuid, setSelectedCollegeUuid] = useState("")
 	const [isSelectedCourseUuid, setSelectedCourseUuid] = useState("")
+	// Item que o aluno ja clicou uma vez na etapa atual: um segundo clique nele vale como Continuar/Finalizar,
+	// para quem nao consegue enxergar o botao do rodape em telas pequenas.
+	const [isConfirmArmedUuid, setConfirmArmedUuid] = useState("")
 
 	const [isViewerModalOpen, setViewerModalOpen] = useState(false)
 	const [isViewerLoading, setViewerLoading] = useState(false)
@@ -730,6 +733,7 @@ export default function Page_Library(): JSX.Element {
 		setSelectionModalStep(Const_shouldSkipCollegeStep ? "course" : "college")
 		setSelectionStepLoading(false)
 		setSelectionModalError("")
+		setConfirmArmedUuid("")
 		setSelectedCollegeUuid(
 			Const_shouldPreselectBySession
 				? Const_suggestedCollegeUuid
@@ -747,6 +751,7 @@ export default function Page_Library(): JSX.Element {
 		setSelectionModalOpen(false)
 		setSelectionModalStep("college")
 		setSelectionModalError("")
+		setConfirmArmedUuid("")
 	}, [isSelectionModalMode])
 
 	const Function_navigateWithFeedback = useCallback((Parameter_route: string, Parameter_target: string) => {
@@ -1126,7 +1131,7 @@ export default function Page_Library(): JSX.Element {
 	}, [isViewerDownloadLoading, isViewerItem])
 
 	const Function_handleContinueFromCollege = useCallback(async () => {
-		if (!isSelectedCollegeUuid) {
+		if (!isSelectedCollegeUuid || isSelectionStepLoading) {
 			return
 		}
 
@@ -1165,9 +1170,11 @@ export default function Page_Library(): JSX.Element {
 			}
 		}
 
+		setConfirmArmedUuid("")
 		setSelectionModalStep("course")
 	}, [
 		isSelectedCollegeUuid,
+		isSelectionStepLoading,
 		isCourseArrayCollegeUuid,
 		isCourseArray,
 		isSelectedCourseUuid,
@@ -1177,7 +1184,7 @@ export default function Page_Library(): JSX.Element {
 	])
 
 	const Function_handleFinalizeSelection = useCallback(async () => {
-		if (!isSession || !isSelectedCollegeUuid || !isSelectedCourseUuid) {
+		if (!isSession || !isSelectedCollegeUuid || !isSelectedCourseUuid || isSelectionStepLoading) {
 			return
 		}
 
@@ -1212,6 +1219,7 @@ export default function Page_Library(): JSX.Element {
 			Function_saveSessionOnStorage(Const_newSession)
 			setSelectionModalOpen(false)
 			setSelectionModalStep("college")
+			setConfirmArmedUuid("")
 		}
 		catch {
 			setSelectionModalError("Não foi possível salvar a faculdade e o curso.")
@@ -1219,7 +1227,43 @@ export default function Page_Library(): JSX.Element {
 		finally {
 			setSelectionStepLoading(false)
 		}
-	}, [isSession, isSelectedCollegeUuid, isSelectedCourseUuid, isCollegeArray, isCourseArray, setSession])
+	}, [isSession, isSelectedCollegeUuid, isSelectedCourseUuid, isSelectionStepLoading, isCollegeArray, isCourseArray, setSession])
+
+	// Primeiro clique seleciona o item; um segundo clique no mesmo item equivale a apertar Continuar/Finalizar.
+	const Function_handleCollegeItemClick = useCallback((Parameter_collegeUuid: string) => {
+		if (isSelectionStepLoading) {
+			return
+		}
+
+		if (isConfirmArmedUuid === Parameter_collegeUuid && isSelectedCollegeUuid === Parameter_collegeUuid) {
+			Function_handleContinueFromCollege().catch(() => {
+				setSelectionModalError("Não foi possível continuar.")
+			})
+			return
+		}
+
+		if (isSelectedCollegeUuid !== Parameter_collegeUuid) {
+			setSelectedCourseUuid("")
+		}
+		setSelectedCollegeUuid(Parameter_collegeUuid)
+		setConfirmArmedUuid(Parameter_collegeUuid)
+	}, [isSelectionStepLoading, isConfirmArmedUuid, isSelectedCollegeUuid, Function_handleContinueFromCollege])
+
+	const Function_handleCourseItemClick = useCallback((Parameter_courseUuid: string) => {
+		if (isSelectionStepLoading) {
+			return
+		}
+
+		if (isConfirmArmedUuid === Parameter_courseUuid && isSelectedCourseUuid === Parameter_courseUuid) {
+			Function_handleFinalizeSelection().catch(() => {
+				setSelectionModalError("Não foi possível finalizar.")
+			})
+			return
+		}
+
+		setSelectedCourseUuid(Parameter_courseUuid)
+		setConfirmArmedUuid(Parameter_courseUuid)
+	}, [isSelectionStepLoading, isConfirmArmedUuid, isSelectedCourseUuid, Function_handleFinalizeSelection])
 
 	useEffect(() => {
 		if (!isSession) {
@@ -1871,12 +1915,7 @@ export default function Page_Library(): JSX.Element {
 													<button
 														key={Let_collegeSingle.college_uuid}
 														type="button"
-														onClick={() => {
-															setSelectedCollegeUuid(Let_collegeSingle.college_uuid)
-															if (isSelectedCollegeUuid !== Let_collegeSingle.college_uuid) {
-																setSelectedCourseUuid("")
-															}
-														}}
+														onClick={() => Function_handleCollegeItemClick(Let_collegeSingle.college_uuid)}
 														className={`w-full text-left rounded-xl border px-4 py-3 transition-all duration-200 ${Const_isSelected
 															? "border-primary bg-primary-50 shadow-[0_0_0_1px_hsl(var(--nextui-primary)/0.35)]"
 															: "border-default-200 bg-white active:border-primary/60 active:bg-default-50"
@@ -1911,7 +1950,7 @@ export default function Page_Library(): JSX.Element {
 													<button
 														key={Let_courseSingle.course_uuid}
 														type="button"
-														onClick={() => setSelectedCourseUuid(Let_courseSingle.course_uuid)}
+														onClick={() => Function_handleCourseItemClick(Let_courseSingle.course_uuid)}
 														className={`w-full text-left rounded-xl border px-4 py-3 transition-all duration-200 ${Const_isSelected
 															? "border-primary bg-primary-50 shadow-[0_0_0_1px_hsl(var(--nextui-primary)/0.35)]"
 															: "border-default-200 bg-white active:border-primary/60 active:bg-default-50"
@@ -1966,7 +2005,10 @@ export default function Page_Library(): JSX.Element {
 									color="default"
 									className="min-w-[124px] font-semibold border-default-400 bg-default-100 text-default-900 active:bg-default-500 active:text-white"
 									startContent={<ArrowLeft size={16} />}
-									onClick={() => setSelectionModalStep("college")}
+									onClick={() => {
+										setConfirmArmedUuid("")
+										setSelectionModalStep("college")
+									}}
 									isDisabled={isSelectionStepLoading}
 								>
 									Voltar
