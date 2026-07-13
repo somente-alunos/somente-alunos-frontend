@@ -202,6 +202,10 @@ export type Type_backendStudentLoginResponse = {
     cartArray: Type_backendContent[];
 };
 
+export type Type_backendStudentSessaoResponse = {
+    student: Type_backendStudent;
+};
+
 export type Type_backendStudentBibliotecaResponse = {
     contentArray: Type_backendContentBiblioteca[];
     buyer?: true;

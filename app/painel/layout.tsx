@@ -2,7 +2,7 @@
 
 import { Component_HeaderIdChatbotContentServer } from "@/component/(path_[id-chatbot])/layout_[id-chatbot]/ui/header_[id-chatbot]/header_[id-chatbot]_content_server"
 import { Const_paymentPaidEventName } from "@/app/payment_status_watcher_client"
-import { Type_backendStudentBibliotecaResponse } from "@/env"
+import { Type_backendStudentBibliotecaResponse, Type_backendStudentSessaoResponse } from "@/env"
 import { Card, CardBody } from "@nextui-org/react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -36,6 +36,14 @@ function Function_getSessionFromStorage(): Type_panelSession | null {
 	catch {
 		return null
 	}
+}
+
+function Function_saveSessionOnStorage(Parameter_session: Type_panelSession): void {
+	if (typeof localStorage === "undefined") {
+		return
+	}
+
+	localStorage.setItem(Const_studentSessionStorageKey, JSON.stringify(Parameter_session))
 }
 
 function Function_getLibraryStorageKey(Parameter_session: Type_panelSession | null): string {
@@ -120,6 +128,7 @@ export default function Layout_Painel(Parameter_content: Readonly<{ children: Re
 	const [isStudentUuidHeader, setStudentUuidHeader] = useState('')
 	const isLibrarySignatureRef = useRef(Function_getLibrarySignature([]))
 	const isLibraryBuyerRef = useRef(false)
+	const isSessionRevalidatedRef = useRef(false)
 
 	const Function_getRedirectToLoginUrl = useCallback((): string => {
 		if (typeof window === 'undefined') {
@@ -198,6 +207,92 @@ export default function Layout_Painel(Parameter_content: Readonly<{ children: Re
 		setStudentUuidHeader(Const_session.student.student_uuid || '')
 		setSession(Const_session)
 	}, [Function_redirectToLogin])
+
+	// A sessao do aluno so era escrita no login e vivia no localStorage para sempre. Quando o suporte
+	// corrigia a faculdade-e-curso no D1, o dispositivo do aluno continuava com o valor antigo mesmo
+	// depois de recarregar a pagina. Aqui, uma vez por carregamento, o D1 volta a ser a fonte da verdade.
+	useEffect(() => {
+		if (!isSession || isSessionRevalidatedRef.current) {
+			return
+		}
+		isSessionRevalidatedRef.current = true
+
+		const Const_studentBeforeRevalidate = isSession.student
+		let Const_isMounted = true
+
+		const Function_revalidateSession = async (): Promise<void> => {
+			try {
+				const Const_response = await fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/sessao`, {
+					credentials: 'include',
+					cache: 'no-store'
+				})
+				if (!Const_response.ok) {
+					if (Const_response.status === 451) {
+						Function_redirectToLogin()
+					}
+					return
+				}
+
+				const Const_responseBody = await Const_response.json() as Type_backendStudentSessaoResponse
+				const Const_studentFromD1 = Const_responseBody?.student
+				if (!Const_isMounted || !Const_studentFromD1?.student_uuid) {
+					return
+				}
+
+				setSession((Parameter_previousSession) => {
+					if (!Parameter_previousSession) {
+						return Parameter_previousSession
+					}
+
+					const Const_previousStudent = Parameter_previousSession.student
+					if (Const_previousStudent.student_uuid !== Const_studentFromD1.student_uuid) {
+						return Parameter_previousSession
+					}
+
+					// Se o proprio aluno confirmou faculdade-e-curso enquanto esta revalidacao estava no ar,
+					// a escolha dele e mais nova que a resposta em maos: nao sobrescreve.
+					const Const_isSessionUntouched = (
+						Const_previousStudent.college_uuid_student === Const_studentBeforeRevalidate.college_uuid_student &&
+						Const_previousStudent.course_uuid_student === Const_studentBeforeRevalidate.course_uuid_student &&
+						Const_previousStudent.is_suggested_information_student === Const_studentBeforeRevalidate.is_suggested_information_student
+					)
+					if (!Const_isSessionUntouched) {
+						return Parameter_previousSession
+					}
+
+					const Const_isSameStudent = (
+						Const_previousStudent.college_uuid_student === Const_studentFromD1.college_uuid_student &&
+						Const_previousStudent.course_uuid_student === Const_studentFromD1.course_uuid_student &&
+						Const_previousStudent.is_suggested_information_student === Const_studentFromD1.is_suggested_information_student
+					)
+					if (Const_isSameStudent) {
+						return Parameter_previousSession
+					}
+
+					const Const_nextSession: Type_panelSession = {
+						...Parameter_previousSession,
+						student: {
+							...Const_previousStudent,
+							college_uuid_student: Const_studentFromD1.college_uuid_student,
+							course_uuid_student: Const_studentFromD1.course_uuid_student,
+							is_suggested_information_student: Const_studentFromD1.is_suggested_information_student
+						}
+					}
+					Function_saveSessionOnStorage(Const_nextSession)
+					return Const_nextSession
+				})
+			}
+			catch {
+				// Revalidacao silenciosa: falha de rede mantem a sessao que ja esta em cache.
+			}
+		}
+
+		Function_revalidateSession()
+
+		return () => {
+			Const_isMounted = false
+		}
+	}, [isSession, Function_redirectToLogin])
 
 	useEffect(() => {
 		if (!isSession) {
