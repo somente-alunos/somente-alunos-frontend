@@ -44,8 +44,30 @@ const Const_oldContentLoadMoreStep = 3
 
 const Const_syncDurationMs = 90000
 const Const_syncPollIntervalMs = 1500
-const Const_syncProgressExponent = 0.35
 const Const_syncCompleteHoldMs = 650
+
+// Curva de progresso em duas fases. A sincronia real termina em um evento
+// imprevisivel (chegada do conteudo), entao a barra nunca pode alcancar 100%
+// sozinha: ela avanca quase linear ate Const_syncCruiseTarget e depois entra em
+// uma assintota que so se aproxima de Const_syncTailTarget. O 100% e sempre o
+// salto final disparado por Function_finishSync.
+const Const_syncCruiseMs = 24000
+const Const_syncCruiseTarget = 80
+const Const_syncCruiseExponent = 0.45
+const Const_syncTailTarget = 99
+const Const_syncTailDecay = 3
+
+const Function_syncCurve = (Parameter_elapsedMs: number): number => {
+	if (Parameter_elapsedMs <= Const_syncCruiseMs) {
+		const Const_t = Math.max(Parameter_elapsedMs, 0) / Const_syncCruiseMs
+		return Const_syncCruiseTarget * Math.pow(Const_t, Const_syncCruiseExponent)
+	}
+
+	const Const_tailMs = Const_syncDurationMs - Const_syncCruiseMs
+	const Const_t = Math.min((Parameter_elapsedMs - Const_syncCruiseMs) / Const_tailMs, 1)
+	const Const_eased = 1 - Math.exp(-Const_syncTailDecay * Const_t)
+	return Const_syncCruiseTarget + (Const_syncTailTarget - Const_syncCruiseTarget) * Const_eased
+}
 
 type Type_libraryDisplayContent = {
 	content_uuid: string;
@@ -355,6 +377,7 @@ export default function Page_Library(): JSX.Element {
 	const syncPollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 	const syncFinishTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const syncStartMsRef = useRef(0)
+	const syncProgressRef = useRef(0)
 	const baselineLiveUuidsRef = useRef<Set<string>>(new Set())
 	const syncPollBusyRef = useRef(false)
 	const syncHasStartedRef = useRef(false)
@@ -800,10 +823,12 @@ export default function Page_Library(): JSX.Element {
 			syncPollIntervalRef.current = null
 		}
 
+		syncProgressRef.current = 100
 		setSyncProgress(100)
 
 		syncFinishTimeoutRef.current = setTimeout(() => {
 			setSyncActive(false)
+			syncProgressRef.current = 0
 			setSyncProgress(0)
 			syncFinishingRef.current = false
 		}, Const_syncCompleteHoldMs)
@@ -818,6 +843,7 @@ export default function Page_Library(): JSX.Element {
 		baselineLiveUuidsRef.current = new Set(isLiveUuidSet)
 		syncStartMsRef.current = Date.now()
 		syncFinishingRef.current = false
+		syncProgressRef.current = 0
 		setSyncProgress(0)
 		setSyncActive(true)
 	}, [isPageLoading, isLibraryBuyer, isFeaturedHasLiveContent, isLiveUuidSet])
@@ -829,13 +855,20 @@ export default function Page_Library(): JSX.Element {
 
 		const Function_tick = (): void => {
 			const Const_elapsedMs = Date.now() - syncStartMsRef.current
-			const Const_t = Math.min(Math.max(Const_elapsedMs / Const_syncDurationMs, 0), 1)
-			setSyncProgress(100 * Math.pow(Const_t, Const_syncProgressExponent))
 
-			if (Const_t >= 1) {
+			if (Const_elapsedMs >= Const_syncDurationMs) {
 				Function_finishSync()
 				return
 			}
+
+			const Const_next = Function_syncCurve(Const_elapsedMs)
+			// A barra so cresce, e cada frame que muda menos de 0.1% nao vale um
+			// re-render da pagina inteira.
+			if (Const_next - syncProgressRef.current >= 0.1) {
+				syncProgressRef.current = Const_next
+				setSyncProgress(Const_next)
+			}
+
 			syncRafRef.current = requestAnimationFrame(Function_tick)
 		}
 		syncRafRef.current = requestAnimationFrame(Function_tick)
@@ -1493,7 +1526,7 @@ export default function Page_Library(): JSX.Element {
 				</div>
 
 				{isSyncActive ? (
-					<div className="mb-5 overflow-hidden rounded-2xl border border-new-primary-200 bg-gradient-to-br from-new-primary-50/80 to-new-secondary-50/60 p-4 shadow-sm">
+					<div className="mb-5 overflow-hidden rounded-2xl border border-new-primary-200 bg-gradient-to-br from-new-primary-50/80 to-new-primary-100/60 p-4 shadow-sm">
 						<div className="flex items-center gap-3">
 							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/80 text-new-primary shadow-sm">
 								{isSyncProgress >= 100 ? (
@@ -1519,8 +1552,10 @@ export default function Page_Library(): JSX.Element {
 
 						<div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-default-200/80">
 							<div
-								className="h-full rounded-full bg-gradient-to-r from-new-primary to-new-secondary transition-[width] duration-300 ease-out"
-								style={{ width: `${Math.min(Math.max(isSyncProgress, 0), 100)}%` }}
+								className="h-full w-full origin-left rounded-full bg-gradient-to-r from-new-primary-700 via-new-primary to-new-primary-400 will-change-transform"
+								style={{
+									transform: `scaleX(${Math.min(Math.max(isSyncProgress, 0), 100) / 100})`,
+								}}
 							/>
 						</div>
 					</div>

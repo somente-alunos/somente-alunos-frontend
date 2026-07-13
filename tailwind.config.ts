@@ -13,8 +13,15 @@ const config: Config = {
     extend: {
       colors: {
         "new-primary": "#1d4ed8",
+        "new-primary-50": "#eff6ff",
+        "new-primary-100": "#dbeafe",
+        "new-primary-200": "#bfdbfe",
+        "new-primary-300": "#93c5fd",
+        "new-primary-400": "#60a5fa",
+        "new-primary-500": "#3b82f6",
         "new-primary-700": "#153aa3",
         "new-secondary": "#166534",
+        "new-secondary-50": "#f0fdf4",
         "new-secondary-100": "#dcfce7",
         "new-secondary-450": "#16a34a",
         "new-secondary-600": "#15803d",
