@@ -42,31 +42,86 @@ const Const_futureContentMinimumOffsetMs = 24 * 60 * 60 * 1000
 const Const_oldContentInitialVisibleCount = 5
 const Const_oldContentLoadMoreStep = 3
 
-const Const_syncDurationMs = 90000
 const Const_syncPollIntervalMs = 1500
 const Const_syncCompleteHoldMs = 650
 
-// Curva de progresso em duas fases. A sincronia real termina em um evento
-// imprevisivel (chegada do conteudo), entao a barra nunca pode alcancar 100%
-// sozinha: ela avanca quase linear ate Const_syncCruiseTarget e depois entra em
-// uma assintota que so se aproxima de Const_syncTailTarget. O 100% e sempre o
-// salto final disparado por Function_finishSync.
-const Const_syncCruiseMs = 24000
-const Const_syncCruiseTarget = 80
-const Const_syncCruiseExponent = 0.45
-const Const_syncTailTarget = 99
-const Const_syncTailDecay = 3
+// Fonte unica de verdade da curva de progresso: porcentagem -> quanto tempo a
+// barra leva para chegar nela PARTINDO DA PORCENTAGEM ANTERIOR. Ou seja, o valor
+// e a duracao do trecho, nao o instante acumulado: "80: 2_000" significa que ir
+// de 70% ate 80% leva 2 segundos. Dentro de cada trecho a barra anda em
+// velocidade constante, entao para acelerar ou desacelerar um pedaco especifico
+// basta mexer no numero dele, sem recalcular os seguintes.
+//
+// A sincronia real termina em um evento imprevisivel (a chegada do conteudo),
+// por isso a tabela para em 98%: os 100% sao sempre o salto final disparado por
+// Function_finishSync. Uma barra parada em 100% com o conteudo ainda ausente e
+// pior do que uma barra lenta.
+const Const_syncStepsMs: Record<number, number> = {
+	0: 0,
+	5: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	10: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	15: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	20: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	25: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	30: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	35: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	40: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	45: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	50: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	55: 1_000, //  0% -> 20% em 1s. Arranque imediato, vende velocidade de cara.
+	60: 2_000, // 20% -> 31% em 2s. Aos 3s a leitura e "um terco pronto": ETA aparente de ~10s.
+	80: 9_000, // 65% -> 80% em 9s. Comeca a desacelerar de forma perceptivel.
+	88: 11_000, // 80% -> 88% em 11s.
+	93: 15_000, // 88% -> 93% em 15s.
+	96: 15_000, // 93% -> 96% em 15s.
+	98: 25_000, // 96% -> 98% em 25s. Teto: 90s acumulados, Function_finishSync assume.
+}
+
+const Const_syncTimeline = Object.entries(Const_syncStepsMs)
+	.map(([Parameter_percent, Parameter_stepMs]) => ({
+		percent: Number(Parameter_percent),
+		stepMs: Parameter_stepMs,
+	}))
+	.sort((Parameter_a, Parameter_b) => Parameter_a.percent - Parameter_b.percent)
+	.reduce<Array<{ percent: number; atMs: number }>>((Parameter_list, Parameter_step) => {
+		const Const_previousMs = Parameter_list.length > 0 ? Parameter_list[Parameter_list.length - 1].atMs : 0
+		Parameter_list.push({
+			percent: Parameter_step.percent,
+			atMs: Const_previousMs + Parameter_step.stepMs,
+		})
+		return Parameter_list
+	}, [])
+
+const Const_syncDurationMs = Const_syncTimeline[Const_syncTimeline.length - 1].atMs
 
 const Function_syncCurve = (Parameter_elapsedMs: number): number => {
-	if (Parameter_elapsedMs <= Const_syncCruiseMs) {
-		const Const_t = Math.max(Parameter_elapsedMs, 0) / Const_syncCruiseMs
-		return Const_syncCruiseTarget * Math.pow(Const_t, Const_syncCruiseExponent)
+	const Const_first = Const_syncTimeline[0]
+	const Const_last = Const_syncTimeline[Const_syncTimeline.length - 1]
+
+	if (Parameter_elapsedMs <= Const_first.atMs) {
+		return Const_first.percent
+	}
+	if (Parameter_elapsedMs >= Const_last.atMs) {
+		return Const_last.percent
 	}
 
-	const Const_tailMs = Const_syncDurationMs - Const_syncCruiseMs
-	const Const_t = Math.min((Parameter_elapsedMs - Const_syncCruiseMs) / Const_tailMs, 1)
-	const Const_eased = 1 - Math.exp(-Const_syncTailDecay * Const_t)
-	return Const_syncCruiseTarget + (Const_syncTailTarget - Const_syncCruiseTarget) * Const_eased
+	for (let Let_index = 1; Let_index < Const_syncTimeline.length; Let_index += 1) {
+		const Const_to = Const_syncTimeline[Let_index]
+		if (Parameter_elapsedMs > Const_to.atMs) {
+			continue
+		}
+
+		const Const_from = Const_syncTimeline[Let_index - 1]
+		const Const_spanMs = Const_to.atMs - Const_from.atMs
+		if (Const_spanMs <= 0) {
+			return Const_to.percent
+		}
+
+		const Const_t = (Parameter_elapsedMs - Const_from.atMs) / Const_spanMs
+		return Const_from.percent + (Const_to.percent - Const_from.percent) * Const_t
+	}
+
+	return Const_last.percent
 }
 
 type Type_libraryDisplayContent = {
