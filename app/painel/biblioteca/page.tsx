@@ -856,6 +856,13 @@ export default function Page_Library(): JSX.Element {
 			return
 		}
 
+		// Primeiro acesso: o sincronizar so comeca depois que o aluno responde o modal obrigatorio
+		// de faculdade-e-curso. Quando ele finaliza, a sessao zera is_suggested_information_student,
+		// este efeito roda de novo e o sincronizar arranca uma unica vez (syncHasStartedRef).
+		if (isNeedSuggestionFlow) {
+			return
+		}
+
 		syncHasStartedRef.current = true
 		baselineLiveUuidsRef.current = new Set(isLiveUuidSet)
 		syncStartMsRef.current = Date.now()
@@ -863,7 +870,7 @@ export default function Page_Library(): JSX.Element {
 		syncProgressRef.current = 0
 		setSyncProgress(0)
 		setSyncActive(true)
-	}, [isPageLoading, isLibraryBuyer, isFeaturedHasLiveContent, isLiveUuidSet])
+	}, [isPageLoading, isLibraryBuyer, isFeaturedHasLiveContent, isLiveUuidSet, isNeedSuggestionFlow])
 
 	useEffect(() => {
 		if (!isSyncActive) {
