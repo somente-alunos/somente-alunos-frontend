@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Function_clearAuthCookieOnServer } from '@/app/auth_cookie_client'
 
 const Const_adminSessionStorageKey = 'somente_alunos_admin_session_v1'
 const Const_getAdminConteudoQueryExample = `{
@@ -420,21 +421,12 @@ function Function_readAdminSessionStorage(): Type_adminSessionStorage | null {
 	}
 }
 
-function Function_clearAdminArtifacts(): void {
+async function Function_clearAdminArtifacts(): Promise<void> {
 	if (typeof localStorage !== 'undefined') {
 		localStorage.removeItem(Const_adminSessionStorageKey)
 	}
 
-	if (typeof document !== 'undefined') {
-		const Const_cookiePrefix = process.env.NEXT_PUBLIC_Env_cookiePrefix
-		const Const_cookieDomain = process.env.NEXT_PUBLIC_Env_cookieDomainApi
-		for (const Const_cookieName of [`${Const_cookiePrefix}_admin_jwt`, `${Const_cookiePrefix}_jwt`, `${Const_cookiePrefix}_student_jwt`]) {
-			document.cookie = `${Const_cookieName}=; Max-Age=0; path=/;`
-			if (Const_cookieDomain) {
-				document.cookie = `${Const_cookieName}=; Max-Age=0; path=/; domain=${Const_cookieDomain};`
-			}
-		}
-	}
+	await Function_clearAuthCookieOnServer()
 }
 
 function Component_FormSection(Parameter_props: { title: string; subtitle?: string; children: React.ReactNode }): JSX.Element {
@@ -1419,8 +1411,8 @@ export default function Page_Admin(): JSX.Element {
 		})
 	}
 
-	const Function_logout = (): void => {
-		Function_clearAdminArtifacts()
+	const Function_logout = async (): Promise<void> => {
+		await Function_clearAdminArtifacts()
 		setAdminSessionStorage(null)
 		Const_router.push('/admin-login')
 	}

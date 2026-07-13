@@ -26,6 +26,7 @@ import React, { FormEvent, useEffect, useState } from "react"
 import { Headset, Github, ChevronRight, Info } from "lucide-react"
 import { Type_backendStudentLoginResponse } from "@/env"
 import { Function_markDeviceReportPendingAfterLogin } from "@/app/device_report_client"
+import { Function_clearAuthCookieOnServer } from "@/app/auth_cookie_client"
 
 const Const_studentSessionStorageKey = 'somente_alunos_student_session_v1'
 const Const_inviteCodeSuggestionStorageKey = 'somente_alunos_invite_code_suggestion_v1'
@@ -48,21 +49,12 @@ export default function LoginPage() {
     const [isIdentityInfoModalOpen, setIdentityInfoModalOpen] = useState(false)
     const router = useRouter()
 
-    const Function_clearAccessArtifacts = () => {
+    const Function_clearAccessArtifacts = async (): Promise<void> => {
         if (typeof localStorage !== 'undefined') {
             localStorage.removeItem(Const_studentSessionStorageKey)
         }
 
-        if (typeof document !== 'undefined') {
-            const Const_cookiePrefix = process.env.NEXT_PUBLIC_Env_cookiePrefix
-            const Const_cookieDomain = process.env.NEXT_PUBLIC_Env_cookieDomainApi
-            document.cookie = `${Const_cookiePrefix}_jwt=; Max-Age=0; path=/;`
-            document.cookie = `${Const_cookiePrefix}_student_jwt=; Max-Age=0; path=/;`
-            if (Const_cookieDomain) {
-                document.cookie = `${Const_cookiePrefix}_jwt=; Max-Age=0; path=/; domain=${Const_cookieDomain};`
-                document.cookie = `${Const_cookiePrefix}_student_jwt=; Max-Age=0; path=/; domain=${Const_cookieDomain};`
-            }
-        }
+        await Function_clearAuthCookieOnServer()
     }
 
     const triggerErrorAnimation = () => {
@@ -212,50 +204,53 @@ export default function LoginPage() {
     }
 
     useEffect(() => {
-        const Const_inviteCodeSuggestion = Function_getInviteCodeSuggestionFromStorage()
+        // A limpeza dos cookies agora e uma chamada ao backend: precisa terminar antes de um
+        // novo login, senao o Set-Cookie de expiracao chega depois e derruba o JWT recem-criado.
+        const Function_prepareLoginPage = async (): Promise<void> => {
+            const Const_inviteCodeSuggestion = Function_getInviteCodeSuggestionFromStorage()
 
-        const params = new URLSearchParams(window.location.search)
-        const hasRedirectFlag = params.has('redirect')
-        const cpfParam = params.get('cpf')
-        const raParam = params.get('ra')
-        const loginParam = (cpfParam || raParam || '').trim()
-        const conviteParam = params.get('convite')
-        const conviteParamNormalized = (conviteParam || '').trim().toUpperCase()
+            const params = new URLSearchParams(window.location.search)
+            const hasRedirectFlag = params.has('redirect')
+            const cpfParam = params.get('cpf')
+            const raParam = params.get('ra')
+            const loginParam = (cpfParam || raParam || '').trim()
+            const conviteParam = params.get('convite')
+            const conviteParamNormalized = (conviteParam || '').trim().toUpperCase()
 
-        if (hasRedirectFlag) {
-            Function_clearAccessArtifacts()
-            setLoad(false)
-            setReady(false)
-            window.history.replaceState({}, '', '/entrar')
-            return
-        }
+            if (hasRedirectFlag) {
+                await Function_clearAccessArtifacts()
+                setLoad(false)
+                setReady(false)
+                window.history.replaceState({}, '', '/entrar')
+                return
+            }
 
-        if (loginParam && conviteParamNormalized) {
-            Function_clearAccessArtifacts()
-            setUsername(loginParam)
-            setInviteCode(conviteParamNormalized)
-            setUsePassword(false)
-            setLoad(false)
-            
-            executeLogin(loginParam, undefined, conviteParamNormalized, { shouldSaveInviteCodeSuggestion: false })
-            return
-        }
+            if (loginParam && conviteParamNormalized) {
+                await Function_clearAccessArtifacts()
+                setUsername(loginParam)
+                setInviteCode(conviteParamNormalized)
+                setUsePassword(false)
+                setLoad(false)
 
-        if (conviteParamNormalized) {
-            setInviteCode(conviteParamNormalized)
-            Function_registerInviteCodeSuggestion(conviteParamNormalized)
-        }
+                await executeLogin(loginParam, undefined, conviteParamNormalized, { shouldSaveInviteCodeSuggestion: false })
+                return
+            }
 
-        let hasSessionStorage = false
-        if (typeof localStorage !== 'undefined') {
-            hasSessionStorage = !!localStorage.getItem(Const_studentSessionStorageKey)
-        }
-        if (hasSessionStorage) {
-            setLoad(false)
-            setReady(true)
+            if (conviteParamNormalized) {
+                setInviteCode(conviteParamNormalized)
+                Function_registerInviteCodeSuggestion(conviteParamNormalized)
+            }
 
-            fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student-or-admin/faculdade/todas`, { credentials: 'include' })
-                .then((response) => {
+            let hasSessionStorage = false
+            if (typeof localStorage !== 'undefined') {
+                hasSessionStorage = !!localStorage.getItem(Const_studentSessionStorageKey)
+            }
+            if (hasSessionStorage) {
+                setLoad(false)
+                setReady(true)
+
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student-or-admin/faculdade/todas`, { credentials: 'include' })
                     if (response.ok) {
                         // Sessao existente revalidada: o JWT nos cookies e do perfil atual.
                         Function_markDeviceReportPendingAfterLogin()
@@ -263,28 +258,30 @@ export default function LoginPage() {
                         router.push('/painel/biblioteca?redirect=1')
                         return
                     }
+                }
+                catch {
+                    // Sem acao: cai na limpeza abaixo e mostra o formulario de login.
+                }
 
-                    Function_clearAccessArtifacts()
-                    setReady(false)
-                })
-                .catch(() => {
-                    Function_clearAccessArtifacts()
-                    setReady(false)
-                })
-            return
+                await Function_clearAccessArtifacts()
+                setReady(false)
+                return
+            }
+
+            if (!conviteParamNormalized && Const_inviteCodeSuggestion) {
+                setInviteCode(Const_inviteCodeSuggestion)
+            }
+
+            if (ALLOW_PASSWORD_LOGIN) {
+                setUsePassword(!conviteParamNormalized)
+            } else {
+                setUsePassword(false)
+            }
+
+            setLoad(false)
         }
 
-        if (!conviteParamNormalized && Const_inviteCodeSuggestion) {
-            setInviteCode(Const_inviteCodeSuggestion)
-        }
-
-        if (ALLOW_PASSWORD_LOGIN) {
-            setUsePassword(!conviteParamNormalized)
-        } else {
-            setUsePassword(false)
-        }
-        
-        setLoad(false)
+        Function_prepareLoginPage()
     }, [])
 
     function scrollToBottom() {

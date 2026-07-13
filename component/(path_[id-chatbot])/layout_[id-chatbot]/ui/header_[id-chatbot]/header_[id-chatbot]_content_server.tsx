@@ -9,6 +9,7 @@ import { Icon_Brand } from '@/icon/brand'
 import { ExitIcon } from '@/icon/exit'
 import { useEffect, useState } from 'react'
 import { useRouter } from "next/navigation"
+import { Function_clearAuthCookieOnServer } from '@/app/auth_cookie_client'
 
 export type Type_informationChatbot = {
     nameChatbot: string;
@@ -47,20 +48,16 @@ export function Component_HeaderIdChatbotContentServer({value: { isInfUser } }: 
         router.push('/suporte')
     }
 
-    function handleLogout() {
+    async function handleLogout() {
         if (isHeaderActionLoadingTarget) {
             return
         }
 
         setHeaderActionLoadingTarget("logout")
 
-        // excluir cookie aut
-        if (typeof document !== 'undefined') {
-            document.cookie = `${process.env.NEXT_PUBLIC_Env_cookiePrefix}_jwt=; Max-Age=0; path=/; domain=${process.env.NEXT_PUBLIC_Env_cookieDomainApi}`;
-            document.cookie = `${process.env.NEXT_PUBLIC_Env_cookiePrefix}_student_jwt=; Max-Age=0; path=/; domain=${process.env.NEXT_PUBLIC_Env_cookieDomainApi}`;
-            document.cookie = `${process.env.NEXT_PUBLIC_Env_cookiePrefix}_jwt=; Max-Age=0; path=/;`;
-            document.cookie = `${process.env.NEXT_PUBLIC_Env_cookiePrefix}_student_jwt=; Max-Age=0; path=/;`;
-        }
+        // excluir cookie aut (HttpOnly: so o backend consegue expirar)
+        await Function_clearAuthCookieOnServer()
+
         if (typeof localStorage !== 'undefined') {
             localStorage.removeItem(Const_studentSessionStorageKey)
         }

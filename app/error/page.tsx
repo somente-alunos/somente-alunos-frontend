@@ -2,9 +2,15 @@
 
 import { Button, Image } from "@nextui-org/react"
 import { useRouter } from "next/navigation"
+import { Function_clearAuthCookieOnServer } from "@/app/auth_cookie_client"
 
 export default function ErrorPage() {
     const router = useRouter()
+
+    const Function_exitAndRetry = async (): Promise<void> => {
+        await Function_clearAuthCookieOnServer()
+        router.push('/entrar')
+    }
 
     return (
         <>
@@ -57,7 +63,7 @@ export default function ErrorPage() {
                     {/* Action Buttons */}
                     <div className="mt-12 flex flex-col md:flex-row gap-4 justify-center">
                         <Button 
-                            onClick={() => {if (typeof document !== 'undefined') { document.cookie = `${process.env.NEXT_PUBLIC_Env_cookiePrefix}_jwt=; Max-Age=0; path=/; domain=${process.env.NEXT_PUBLIC_Env_cookieDomainApi}`; router.push('/entrar') }}}
+                            onClick={() => { Function_exitAndRetry() }}
                             variant="shadow"
                             color="primary"
                             size="lg"
