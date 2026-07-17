@@ -20,7 +20,6 @@ type Type_contentViewerModalClientProps = {
 	ownerAlias: string;
 	isLoading: boolean;
 	fileUrl: string;
-	isHtmlFile: boolean;
 	errorMessage: string;
 	reportContentUuid?: string | null;
 	topActions?: ReactNode;

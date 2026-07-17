@@ -414,7 +414,6 @@ export default function Page_Library(): JSX.Element {
 	const [isViewerError, setViewerError] = useState("")
 	const [isViewerItem, setViewerItem] = useState<Type_backendContentBiblioteca | null>(null)
 	const [isViewerFileUrl, setViewerFileUrl] = useState("")
-	const [isViewerFileMimeType, setViewerFileMimeType] = useState("")
 	const [isViewerDownloadLoading, setViewerDownloadLoading] = useState(false)
 	const [isPressedLibraryCardUuid, setPressedLibraryCardUuid] = useState("")
 	const [isOldContentVisibleCount, setOldContentVisibleCount] = useState(Const_oldContentInitialVisibleCount)
@@ -554,15 +553,9 @@ export default function Page_Library(): JSX.Element {
 		)
 	}, [isLibraryContentDisplayArray])
 
-	const isViewerHtmlFile = useMemo(() => {
-		const Const_mimeType = isViewerFileMimeType.trim().toLowerCase()
-		return Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
-	}, [isViewerFileMimeType])
-
 	const Function_clearViewerFileUrl = useCallback(() => {
 		isViewerFileUrlRef.current = ""
 		setViewerFileUrl("")
-		setViewerFileMimeType("")
 	}, [])
 
 	const Function_fetchCollegeArray = useCallback(async (): Promise<Type_backendCollege[]> => {
@@ -1005,35 +998,6 @@ export default function Page_Library(): JSX.Element {
 			}
 		}
 	}, [])
-
-	/* const Function_downloadViewerFile = useCallback(() => {
-		if (!isViewerFileUrl || !isViewerItem || isViewerDownloadLoading) {
-			return
-		}
-
-		try {
-			setViewerDownloadLoading(true)
-			const Const_isHtml = isViewerFileMimeType.includes("text/html") || isViewerFileMimeType.includes("application/xhtml+xml")
-			const Const_isPdf = isViewerFileMimeType.includes("application/pdf")
-			const Const_extension = Const_isHtml ? "html" : (Const_isPdf ? "pdf" : "bin")
-			const Const_fileNameBase = isViewerItem.name_content
-				.trim()
-				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, "-")
-				.replace(/^-+|-+$/g, "")
-			const Const_fileNameSafe = Const_fileNameBase || `conteudo-${isViewerItem.content_uuid.slice(0, 8)}`
-
-			const Const_anchor = document.createElement("a")
-			Const_anchor.href = isViewerFileUrl
-			Const_anchor.download = `${Const_fileNameSafe}.${Const_extension}`
-			document.body.appendChild(Const_anchor)
-			Const_anchor.click()
-			Const_anchor.remove()
-		}
-		finally {
-			window.setTimeout(() => setViewerDownloadLoading(false), 250)
-		}
-	}, [isViewerDownloadLoading, isViewerFileMimeType, isViewerFileUrl, isViewerItem]) */
 
 	const Function_downloadViewerFile = useCallback(async () => {
 		// Validação inicial do novo ambiente (não precisamos mais validar url ou mime type)
@@ -2048,7 +2012,6 @@ export default function Page_Library(): JSX.Element {
 				ownerAlias={Function_getStudentAlias(isViewerItem?.student_uuid_content || "")}
 				isLoading={isViewerLoading}
 				fileUrl={isViewerFileUrl}
-				isHtmlFile={isViewerHtmlFile}
 				errorMessage={isViewerError}
 				reportContentUuid={isViewerItem?.content_uuid || ""}
 				topActions={isViewerItem?.isAcquiredContent ? (

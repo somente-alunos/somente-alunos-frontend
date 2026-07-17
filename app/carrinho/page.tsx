@@ -175,7 +175,6 @@ export default function Page_Carrinho(): JSX.Element {
 	const [isViewerError, setViewerError] = useState("")
 	const [isViewerItem, setViewerItem] = useState<Type_cartDisplayContent | null>(null)
 	const [isViewerFileUrl, setViewerFileUrl] = useState("")
-	const [isViewerFileMimeType, setViewerFileMimeType] = useState("")
 
 	const isViewerFileUrlRef = useRef("")
 	const isCartSignatureRef = useRef(Function_getCartSignature([]))
@@ -209,11 +208,6 @@ export default function Page_Carrinho(): JSX.Element {
 
 		return Number(Const_totalOld.toFixed(2))
 	}, [isCartArray])
-
-	const isViewerHtmlFile = useMemo(() => {
-		const Const_mimeType = isViewerFileMimeType.trim().toLowerCase()
-		return Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
-	}, [isViewerFileMimeType])
 
 	const isCartHasDiscount = isCartOldTotalAmount > isCartTotalAmount
 	const isPaymentCompleted = isPaymentStatus === "paid"
@@ -481,7 +475,6 @@ export default function Page_Carrinho(): JSX.Element {
 	const Function_clearViewerFileUrl = useCallback(() => {
 		isViewerFileUrlRef.current = ""
 		setViewerFileUrl("")
-		setViewerFileMimeType("")
 	}, [])
 
 	const Function_loadViewerFile = useCallback(async (Parameter_content: Type_cartDisplayContent): Promise<void> => {
@@ -1021,7 +1014,6 @@ export default function Page_Carrinho(): JSX.Element {
 				ownerAlias={Function_getStudentAlias(isViewerItem?.student_uuid_content || "")}
 				isLoading={isViewerLoading}
 				fileUrl={isViewerFileUrl}
-				isHtmlFile={isViewerHtmlFile}
 				errorMessage={isViewerError}
 				reportContentUuid={isViewerItem?.content_uuid || ""}
 			/>
