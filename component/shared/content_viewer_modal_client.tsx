@@ -9,9 +9,9 @@ import {
 	ModalHeader,
 	Spinner
 } from "@nextui-org/react"
-import iframeResize from "@iframe-resizer/parent"
 import { AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { Const_viewerHeightMessageSource } from "@/component/shared/content_viewer_iframe_html"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 
 type Type_contentViewerModalClientProps = {
@@ -56,6 +56,7 @@ export function Component_ContentViewerModalClient(
 	const [isReportError, setReportError] = useState("")
 
 	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
+	const [isViewerContentHeight, setViewerContentHeight] = useState(0)
 
 	const Const_warningContent = Parameter_props.warningContent || Const_defaultWarningContent
 	const Const_hasContentUuidToReport = typeof Parameter_props.reportContentUuid === "string" && Parameter_props.reportContentUuid.trim().length > 0
@@ -67,36 +68,47 @@ export function Component_ContentViewerModalClient(
 
 	/**
 	 * O iframe roda com sandbox="allow-scripts", ou seja, origem opaca: nao da para ler o
-	 * contentDocument dele. Quem mede a altura do conteudo e reporta por postMessage e o child
-	 * do iframe-resizer, injetado no HTML antes do blob ser criado (Function_injectIframeResizerChildScript).
+	 * contentDocument dele. Quem mede a altura do conteudo e o <script> medidor que o backend injeta
+	 * no HTML antes de servir, que reporta por postMessage. A origem do iframe sandboxed e "null",
+	 * entao a validacao aqui e por event.source === contentWindow (mais forte que checar origem).
+	 *
+	 * Nao dependemos de saber o tipo do arquivo: o iframe comeca com altura fixa de viewport (mostra
+	 * o conteudo com scroll, nunca branco) e so cresce para a altura exata quando chega uma mensagem
+	 * valida. HTML injetado -> reporta e cresce; PDF/erro -> nunca reporta e fica na altura fixa.
 	 */
 	useEffect(() => {
-		if (!Parameter_props.isOpen || Parameter_props.isLoading || !Parameter_props.isHtmlFile || !Parameter_props.fileUrl) {
+		if (!Parameter_props.isOpen || Parameter_props.isLoading || !Parameter_props.fileUrl) {
 			return
 		}
 
-		const Const_iframe = isViewerIframeRef.current
-		if (!Const_iframe) {
-			return
+		setViewerContentHeight(0)
+
+		const Function_handleViewerMessage = (Parameter_event: MessageEvent): void => {
+			const Const_iframe = isViewerIframeRef.current
+			if (!Const_iframe || Parameter_event.source !== Const_iframe.contentWindow) {
+				return
+			}
+
+			const Const_data = Parameter_event.data as { source?: unknown; type?: unknown; height?: unknown } | null
+			if (!Const_data || Const_data.source !== Const_viewerHeightMessageSource || Const_data.type !== "viewer-height") {
+				return
+			}
+
+			const Const_height = Number(Const_data.height)
+			if (!Number.isFinite(Const_height) || Const_height <= 0) {
+				return
+			}
+
+			// Teto de sanidade: o conteudo e de terceiros, nao deixamos ele estourar o layout.
+			setViewerContentHeight(Math.min(Math.ceil(Const_height), 120000))
 		}
 
-		const Const_connectedIframeArray = iframeResize(
-			{
-				license: "GPLv3",
-				// A origem do iframe sandboxed e "null", entao a checagem por origem nunca casaria.
-				checkOrigin: false,
-				direction: "vertical",
-				log: false
-			},
-			Const_iframe
-		)
+		window.addEventListener("message", Function_handleViewerMessage)
 
 		return () => {
-			for (const Const_connectedIframe of Const_connectedIframeArray) {
-				Const_connectedIframe.iFrameResizer?.disconnect()
-			}
+			window.removeEventListener("message", Function_handleViewerMessage)
 		}
-	}, [Parameter_props.isOpen, Parameter_props.isLoading, Parameter_props.isHtmlFile, Parameter_props.fileUrl])
+	}, [Parameter_props.isOpen, Parameter_props.isLoading, Parameter_props.fileUrl])
 
 	const Function_handleOpenReportModal = useCallback((): void => {
 		setReportStatus("idle")
@@ -269,9 +281,10 @@ export function Component_ContentViewerModalClient(
 									ref={isViewerIframeRef}
 									src={Parameter_props.fileUrl}
 									title="Visualizador de conteúdo"
-									className={Parameter_props.isHtmlFile
-										? "!m-0 !p-0 w-full min-h-[720px] border-0 bg-transparent"
-										: "!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"}
+									className="!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"
+									style={isViewerContentHeight > 0
+										? { height: `${isViewerContentHeight}px` }
+										: undefined}
 								/>
 							) : (
 								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex items-center justify-center text-default-600 text-base px-4 text-center">

@@ -2,7 +2,6 @@
 
 import { Function_useDeviceReportOnLibrary } from "@/app/device_report_client"
 import { PageContext, Type_panelSession } from "@/app/painel/layout_context"
-import { Function_injectIframeResizerChildScript } from "@/component/shared/content_viewer_iframe_html"
 import { Component_ContentViewerModalClient } from "@/component/shared/content_viewer_modal_client"
 import {
 	Type_backendCollege,
@@ -561,10 +560,7 @@ export default function Page_Library(): JSX.Element {
 	}, [isViewerFileMimeType])
 
 	const Function_clearViewerFileUrl = useCallback(() => {
-		if (isViewerFileUrlRef.current) {
-			URL.revokeObjectURL(isViewerFileUrlRef.current)
-			isViewerFileUrlRef.current = ""
-		}
+		isViewerFileUrlRef.current = ""
 		setViewerFileUrl("")
 		setViewerFileMimeType("")
 	}, [])
@@ -806,36 +802,29 @@ export default function Page_Library(): JSX.Element {
 		setViewerLoading(true)
 		setViewerError("")
 
-		const Const_response = await fetch(
-			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`,
+		// O iframe aponta direto para a URL da API (sem baixar/criar blob): mais simples e evita
+		// esquisitices de blob no celular. O backend serve o HTML ja com o <script> medidor de altura
+		// e o iframe roda com sandbox="allow-scripts", isolando o JS do aluno.
+		// Antes de abrir, uma checagem barata de sessao preserva o redirecionamento ao /entrar quando
+		// o JWT expira (o iframe sozinho so mostraria o corpo de erro, sem dar para tratar o 451).
+		const Const_sessionResponse = await fetch(
+			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/sessao`,
 			{ credentials: "include" }
 		)
-		if (!Const_response.ok) {
-			if (Const_response.status === 451) {
+		if (!Const_sessionResponse.ok) {
+			if (Const_sessionResponse.status === 451) {
 				Const_router.push("/entrar")
 				return
 			}
 
-			throw new Error("Falha ao carregar arquivo do conteúdo")
+			throw new Error("Falha ao validar sessão do aluno")
 		}
 
-		const Const_blob = await Const_response.blob()
-		const Const_mimeType = (Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase()
-		const Const_isHtml = Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
-
-		// O iframe do visualizador e sandboxed, entao a altura so chega via child do iframe-resizer.
-		const Const_viewerBlob = Const_isHtml
-			? new Blob(
-				[Function_injectIframeResizerChildScript(await Const_blob.text())],
-				{ type: Const_mimeType || "text/html" }
-			)
-			: Const_blob
+		const Const_fileUrl = `${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`
 
 		Function_clearViewerFileUrl()
-		const Const_blobUrl = URL.createObjectURL(Const_viewerBlob)
-		isViewerFileUrlRef.current = Const_blobUrl
-		setViewerFileUrl(Const_blobUrl)
-		setViewerFileMimeType(Const_mimeType)
+		isViewerFileUrlRef.current = Const_fileUrl
+		setViewerFileUrl(Const_fileUrl)
 	}, [Const_router, Function_clearViewerFileUrl])
 
 	const Function_openViewer = useCallback(async (Parameter_content: Type_backendContentBiblioteca): Promise<void> => {
