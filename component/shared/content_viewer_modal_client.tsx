@@ -21,7 +21,6 @@ type Type_contentViewerModalClientProps = {
 	isLoading: boolean;
 	fileUrl: string;
 	isHtmlFile: boolean;
-	htmlContent?: string;
 	errorMessage: string;
 	reportContentUuid?: string | null;
 	topActions?: ReactNode;
@@ -62,10 +61,6 @@ export function Component_ContentViewerModalClient(
 	const Const_hasContentUuidToReport = typeof Parameter_props.reportContentUuid === "string" && Parameter_props.reportContentUuid.trim().length > 0
 	const Const_reportCanSubmit = isReportReasonArray.length > 0 && isReportStatus !== "loading"
 
-	// HTML e renderizado via srcDoc (funciona no celular, ao contrario de blob: em iframe); PDF continua via src.
-	const Const_htmlContentToRender = typeof Parameter_props.htmlContent === "string" ? Parameter_props.htmlContent : ""
-	const Const_shouldRenderHtml = Parameter_props.isHtmlFile && Const_htmlContentToRender.length > 0
-
 	const Const_reportReasonSet = useMemo(() => {
 		return new Set(isReportReasonArray)
 	}, [isReportReasonArray])
@@ -76,7 +71,7 @@ export function Component_ContentViewerModalClient(
 	 * do iframe-resizer, injetado no HTML antes do blob ser criado (Function_injectIframeResizerChildScript).
 	 */
 	useEffect(() => {
-		if (!Parameter_props.isOpen || Parameter_props.isLoading || !Const_shouldRenderHtml) {
+		if (!Parameter_props.isOpen || Parameter_props.isLoading || !Parameter_props.isHtmlFile || !Parameter_props.fileUrl) {
 			return
 		}
 
@@ -101,7 +96,7 @@ export function Component_ContentViewerModalClient(
 				Const_connectedIframe.iFrameResizer?.disconnect()
 			}
 		}
-	}, [Parameter_props.isOpen, Parameter_props.isLoading, Const_shouldRenderHtml, Const_htmlContentToRender])
+	}, [Parameter_props.isOpen, Parameter_props.isLoading, Parameter_props.isHtmlFile, Parameter_props.fileUrl])
 
 	const Function_handleOpenReportModal = useCallback((): void => {
 		setReportStatus("idle")
@@ -268,21 +263,15 @@ export function Component_ContentViewerModalClient(
 										}}
 									/>
 								</div>
-							) : Const_shouldRenderHtml ? (
-								<iframe
-									sandbox="allow-scripts"
-									ref={isViewerIframeRef}
-									srcDoc={Const_htmlContentToRender}
-									title="Visualizador de conteúdo"
-									className="!m-0 !p-0 w-full min-h-[720px] border-0 bg-transparent"
-								/>
 							) : Parameter_props.fileUrl ? (
 								<iframe
 									sandbox="allow-scripts"
 									ref={isViewerIframeRef}
 									src={Parameter_props.fileUrl}
 									title="Visualizador de conteúdo"
-									className="!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"
+									className={Parameter_props.isHtmlFile
+										? "!m-0 !p-0 w-full min-h-[720px] border-0 bg-transparent"
+										: "!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"}
 								/>
 							) : (
 								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex items-center justify-center text-default-600 text-base px-4 text-center">

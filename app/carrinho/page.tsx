@@ -176,7 +176,6 @@ export default function Page_Carrinho(): JSX.Element {
 	const [isViewerError, setViewerError] = useState("")
 	const [isViewerItem, setViewerItem] = useState<Type_cartDisplayContent | null>(null)
 	const [isViewerFileUrl, setViewerFileUrl] = useState("")
-	const [isViewerHtmlContent, setViewerHtmlContent] = useState("")
 	const [isViewerFileMimeType, setViewerFileMimeType] = useState("")
 
 	const isViewerFileUrlRef = useRef("")
@@ -487,7 +486,6 @@ export default function Page_Carrinho(): JSX.Element {
 		}
 
 		setViewerFileUrl("")
-		setViewerHtmlContent("")
 		setViewerFileMimeType("")
 	}, [])
 
@@ -513,19 +511,16 @@ export default function Page_Carrinho(): JSX.Element {
 			const Const_mimeType = (Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase()
 			const Const_isHtml = Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
 
+			// O iframe do visualizador e sandboxed, entao a altura so chega via child do iframe-resizer.
+			const Const_viewerBlob = Const_isHtml
+				? new Blob(
+					[Function_injectIframeResizerChildScript(await Const_blob.text())],
+					{ type: Const_mimeType || "text/html" }
+				)
+				: Const_blob
+
 			Function_clearViewerFileUrl()
-
-			if (Const_isHtml) {
-				// HTML e injetado via srcDoc: blob: em iframe nao renderiza em navegador de celular.
-				// O child do iframe-resizer e injetado no HTML para reportar a altura por postMessage.
-				const Const_htmlWithResizer = Function_injectIframeResizerChildScript(await Const_blob.text())
-				setViewerHtmlContent(Const_htmlWithResizer)
-				setViewerFileMimeType(Const_mimeType || "text/html")
-				return
-			}
-
-			// PDF (ou outro binario) continua via blob url no src do iframe.
-			const Const_blobUrl = URL.createObjectURL(Const_blob)
+			const Const_blobUrl = URL.createObjectURL(Const_viewerBlob)
 			isViewerFileUrlRef.current = Const_blobUrl
 			setViewerFileUrl(Const_blobUrl)
 			setViewerFileMimeType(Const_mimeType)
@@ -1039,7 +1034,6 @@ export default function Page_Carrinho(): JSX.Element {
 				isLoading={isViewerLoading}
 				fileUrl={isViewerFileUrl}
 				isHtmlFile={isViewerHtmlFile}
-				htmlContent={isViewerHtmlContent}
 				errorMessage={isViewerError}
 				reportContentUuid={isViewerItem?.content_uuid || ""}
 			/>
