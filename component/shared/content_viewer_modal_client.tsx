@@ -56,6 +56,10 @@ export function Component_ContentViewerModalClient(
 
 	const isViewerIframeRef = useRef<HTMLIFrameElement | null>(null)
 	const [isViewerContentHeight, setViewerContentHeight] = useState(0)
+	// O spinner "Buscando..." precisa ficar ate o iframe realmente carregar o conteudo (o backend
+	// busca o arquivo no R2), e nao apenas ate a URL ser definida. Este estado vira true no onLoad do
+	// iframe (sinal robusto, dispara ate em conteudo nao-HTML) ou na primeira mensagem de altura.
+	const [isIframeReady, setIframeReady] = useState(false)
 
 	const Const_warningContent = Parameter_props.warningContent || Const_defaultWarningContent
 	const Const_hasContentUuidToReport = typeof Parameter_props.reportContentUuid === "string" && Parameter_props.reportContentUuid.trim().length > 0
@@ -81,6 +85,7 @@ export function Component_ContentViewerModalClient(
 		}
 
 		setViewerContentHeight(0)
+		setIframeReady(false)
 
 		const Function_handleViewerMessage = (Parameter_event: MessageEvent): void => {
 			const Const_iframe = isViewerIframeRef.current
@@ -98,14 +103,24 @@ export function Component_ContentViewerModalClient(
 				return
 			}
 
+			// A primeira altura valida ja significa que o conteudo renderizou: podemos tirar o spinner.
+			setIframeReady(true)
+
 			// Teto de sanidade: o conteudo e de terceiros, nao deixamos ele estourar o layout.
 			setViewerContentHeight(Math.min(Math.ceil(Const_height), 120000))
 		}
 
 		window.addEventListener("message", Function_handleViewerMessage)
 
+		// Rede de seguranca: se por algum motivo nem o onLoad nem a mensagem de altura chegarem,
+		// nao deixamos o spinner girar para sempre.
+		const Const_readyFallbackTimeout = window.setTimeout(() => {
+			setIframeReady(true)
+		}, 15000)
+
 		return () => {
 			window.removeEventListener("message", Function_handleViewerMessage)
+			window.clearTimeout(Const_readyFallbackTimeout)
 		}
 	}, [Parameter_props.isOpen, Parameter_props.isLoading, Parameter_props.fileUrl])
 
@@ -259,10 +274,30 @@ export function Component_ContentViewerModalClient(
 
 					<ModalBody className="px-2 md:px-5 pb-4 md:pb-5 pt-0">
 						<div
-							className="w-full shadow-medium rounded-[6px] border border-black overflow-hidden flex flex-col items-center min-h-[68svh] md:min-h-[74svh]"
+							className="relative w-full shadow-medium rounded-[6px] border border-black overflow-hidden flex flex-col items-center min-h-[68svh] md:min-h-[74svh]"
 						>
-							{Parameter_props.isLoading ? (
-								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex flex-col items-center justify-center">
+							{Parameter_props.fileUrl ? (
+								<iframe
+									sandbox="allow-scripts"
+									ref={isViewerIframeRef}
+									src={Parameter_props.fileUrl}
+									title="Visualizador de conteúdo"
+									onLoad={() => setIframeReady(true)}
+									className="!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"
+									style={isViewerContentHeight > 0
+										? { height: `${isViewerContentHeight}px` }
+										: undefined}
+								/>
+							) : !Parameter_props.isLoading ? (
+								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex items-center justify-center text-default-600 text-base px-4 text-center">
+									Arquivo indisponível no momento.
+								</div>
+							) : null}
+
+							{/* O spinner fica sobreposto ao iframe ate o conteudo carregar de verdade
+							    (onLoad ou primeira mensagem de altura), nao apenas ate a URL ser definida. */}
+							{Parameter_props.isLoading || (Parameter_props.fileUrl && !isIframeReady) ? (
+								<div className="absolute inset-0 z-10 w-full min-h-[68svh] md:min-h-[74svh] flex flex-col items-center justify-center bg-white">
 									<Spinner
 										label="Buscando..."
 										color="primary"
@@ -274,22 +309,7 @@ export function Component_ContentViewerModalClient(
 										}}
 									/>
 								</div>
-							) : Parameter_props.fileUrl ? (
-								<iframe
-									sandbox="allow-scripts"
-									ref={isViewerIframeRef}
-									src={Parameter_props.fileUrl}
-									title="Visualizador de conteúdo"
-									className="!m-0 !p-0 w-full h-[68svh] md:h-[74svh] border-0 bg-transparent"
-									style={isViewerContentHeight > 0
-										? { height: `${isViewerContentHeight}px` }
-										: undefined}
-								/>
-							) : (
-								<div className="w-full min-h-[68svh] md:min-h-[74svh] flex items-center justify-center text-default-600 text-base px-4 text-center">
-									Arquivo indisponível no momento.
-								</div>
-							)}
+							) : null}
 
 							{Parameter_props.floatingAction || null}
 

@@ -798,27 +798,28 @@ export default function Page_Library(): JSX.Element {
 		// O iframe aponta direto para a URL da API (sem baixar/criar blob): mais simples e evita
 		// esquisitices de blob no celular. O backend serve o HTML ja com o <script> medidor de altura
 		// e o iframe roda com sandbox="allow-scripts", isolando o JS do aluno.
-		// Antes de abrir, uma checagem barata de sessao preserva o redirecionamento ao /entrar quando
-		// o JWT expira (o iframe sozinho so mostraria o corpo de erro, sem dar para tratar o 451).
-		const Const_sessionResponse = await fetch(
-			`${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/sessao`,
-			{ credentials: "include" }
+		// Nao ha mais pre-check de /get/student/sessao aqui: o JWT no cookie dura ~10 anos, e o
+		// redirect ao /entrar em JWT expirado ja e garantido pela revalidacao de sessao do layout e
+		// pelos refreshes de catalogo/biblioteca (todos tratam 451). Isso evita serializar um round-trip
+		// so para abrir o conteudo.
+
+		// full vs preview: mesma regra que o backend aplica pelo JWT. Aqui o modo entra na URL como
+		// query param apenas para separar o cache do navegador (preview e full viram URLs distintas),
+		// entao apos a compra o aluno passa a pedir type=full e nao ve o preview cacheado. O backend
+		// continua decidindo o acesso so pela autenticacao; este param nunca autoriza nada.
+		const Const_useFullContent = (
+			isSession?.student.isAllContentUnlocked === true ||
+			Parameter_content.isAcquiredContent === true ||
+			Parameter_content.student_uuid_content === isSession?.student.student_uuid
 		)
-		if (!Const_sessionResponse.ok) {
-			if (Const_sessionResponse.status === 451) {
-				Const_router.push("/entrar")
-				return
-			}
+		const Const_contentMode = Const_useFullContent ? "full" : "preview"
 
-			throw new Error("Falha ao validar sessão do aluno")
-		}
-
-		const Const_fileUrl = `${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}`
+		const Const_fileUrl = `${process.env.NEXT_PUBLIC_Env_urlApiBackend}/get/student/conteudo/file?content_uuid=${encodeURIComponent(Parameter_content.content_uuid)}&type=${Const_contentMode}`
 
 		Function_clearViewerFileUrl()
 		isViewerFileUrlRef.current = Const_fileUrl
 		setViewerFileUrl(Const_fileUrl)
-	}, [Const_router, Function_clearViewerFileUrl])
+	}, [Function_clearViewerFileUrl, isSession])
 
 	const Function_openViewer = useCallback(async (Parameter_content: Type_backendContentBiblioteca): Promise<void> => {
 		try {
