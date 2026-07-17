@@ -415,6 +415,7 @@ export default function Page_Library(): JSX.Element {
 	const [isViewerError, setViewerError] = useState("")
 	const [isViewerItem, setViewerItem] = useState<Type_backendContentBiblioteca | null>(null)
 	const [isViewerFileUrl, setViewerFileUrl] = useState("")
+	const [isViewerHtmlContent, setViewerHtmlContent] = useState("")
 	const [isViewerFileMimeType, setViewerFileMimeType] = useState("")
 	const [isViewerDownloadLoading, setViewerDownloadLoading] = useState(false)
 	const [isPressedLibraryCardUuid, setPressedLibraryCardUuid] = useState("")
@@ -560,12 +561,16 @@ export default function Page_Library(): JSX.Element {
 		return Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
 	}, [isViewerFileMimeType])
 
+	// Verdadeiro quando ha conteudo carregado, seja HTML (srcDoc) ou PDF (blob url).
+	const isViewerHasContent = isViewerHtmlContent.length > 0 || isViewerFileUrl.length > 0
+
 	const Function_clearViewerFileUrl = useCallback(() => {
 		if (isViewerFileUrlRef.current) {
 			URL.revokeObjectURL(isViewerFileUrlRef.current)
 			isViewerFileUrlRef.current = ""
 		}
 		setViewerFileUrl("")
+		setViewerHtmlContent("")
 		setViewerFileMimeType("")
 	}, [])
 
@@ -823,16 +828,19 @@ export default function Page_Library(): JSX.Element {
 		const Const_mimeType = (Const_response.headers.get("content-type") || Const_blob.type || "").trim().toLowerCase()
 		const Const_isHtml = Const_mimeType.includes("text/html") || Const_mimeType.includes("application/xhtml+xml")
 
-		// O iframe do visualizador e sandboxed, entao a altura so chega via child do iframe-resizer.
-		const Const_viewerBlob = Const_isHtml
-			? new Blob(
-				[Function_injectIframeResizerChildScript(await Const_blob.text())],
-				{ type: Const_mimeType || "text/html" }
-			)
-			: Const_blob
-
 		Function_clearViewerFileUrl()
-		const Const_blobUrl = URL.createObjectURL(Const_viewerBlob)
+
+		if (Const_isHtml) {
+			// HTML e injetado via srcDoc: blob: em iframe nao renderiza em navegador de celular.
+			// O child do iframe-resizer e injetado no HTML para reportar a altura por postMessage.
+			const Const_htmlWithResizer = Function_injectIframeResizerChildScript(await Const_blob.text())
+			setViewerHtmlContent(Const_htmlWithResizer)
+			setViewerFileMimeType(Const_mimeType || "text/html")
+			return
+		}
+
+		// PDF (ou outro binario) continua via blob url no src do iframe.
+		const Const_blobUrl = URL.createObjectURL(Const_blob)
 		isViewerFileUrlRef.current = Const_blobUrl
 		setViewerFileUrl(Const_blobUrl)
 		setViewerFileMimeType(Const_mimeType)
@@ -2060,13 +2068,14 @@ export default function Page_Library(): JSX.Element {
 				isLoading={isViewerLoading}
 				fileUrl={isViewerFileUrl}
 				isHtmlFile={isViewerHtmlFile}
+				htmlContent={isViewerHtmlContent}
 				errorMessage={isViewerError}
 				reportContentUuid={isViewerItem?.content_uuid || ""}
 				topActions={isViewerItem?.isAcquiredContent ? (
 					<Button
 						onClick={Function_downloadViewerFile}
 						isLoading={isViewerDownloadLoading}
-						isDisabled={!isViewerFileUrl || isViewerLoading}
+						isDisabled={!isViewerHasContent || isViewerLoading}
 						variant="bordered"
 						className="tracking-[0.5px] text-[16px] font-medium border-new-primary text-new-primary active:bg-new-primary active:text-white"
 					>
